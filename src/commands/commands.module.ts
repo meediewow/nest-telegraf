@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
-import { TelegrafCoreModule } from 'src/bot/bot.module';
 import { CommandsService } from './commands.service';
 
 @Module({
-  imports: [TelegrafCoreModule],
+  imports: [],
   providers: [CommandsService],
 })
 export class CommandsModule {}
