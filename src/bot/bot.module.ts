@@ -65,6 +65,41 @@ export class TelegrafCoreModule implements OnApplicationShutdown {
     };
   }
 
+  public static forRootAsync(
+    options: TelegrafModuleAsyncOptions,
+  ): DynamicModule {
+    const telegrafBotName = getBotToken(options.botName);
+
+    const telegrafBotNameProvider = {
+      provide: TELEGRAF_BOT_NAME,
+      useValue: telegrafBotName,
+    };
+
+    const telegrafBotProvider: Provider = {
+      provide: telegrafBotName,
+      useFactory: async (options: TelegrafModuleOptions) =>
+        await createBotFactory(options),
+      inject: [TELEGRAF_MODULE_OPTIONS],
+    };
+
+    const asyncProviders = this.createAsyncProviders(options);
+    return {
+      module: TelegrafCoreModule,
+      imports: options.imports,
+      providers: [
+        ...asyncProviders,
+        telegrafStageProvider,
+        telegrafBotNameProvider,
+        telegrafBotProvider,
+      ],
+      exports: [
+        telegrafStageProvider,
+        telegrafBotNameProvider,
+        telegrafBotProvider,
+      ],
+    };
+  }
+
   async onApplicationShutdown(): Promise<void> {
     const bot = this.moduleRef.get<any>(this.botName);
     bot && (await bot.stop());
