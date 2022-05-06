@@ -1,8 +1,37 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "sourceRoot": "apps/bots-telegraf-test/src",
   "compilerOptions": {
-    "assets": [{ "include": "i18n/**/*", "watchAssets": true }]
+    "assets": [
+      {
+        "include": "i18n/**/*",
+        "watchAssets": true
+      }
+    ],
+    "webpack": true,
+    "tsConfigPath": "apps/bots-telegraf-test/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/bots-telegraf-test",
+  "projects": {
+    "bots-telegraf-test": {
+      "type": "application",
+      "root": "apps/bots-telegraf-test",
+      "entryFile": "main",
+      "sourceRoot": "apps/bots-telegraf-test/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/bots-telegraf-test/tsconfig.app.json"
+      }
+    },
+    "first-service": {
+      "type": "application",
+      "root": "apps/first-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/first-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/first-service/tsconfig.app.json"
+      }
+    }
   }
 }

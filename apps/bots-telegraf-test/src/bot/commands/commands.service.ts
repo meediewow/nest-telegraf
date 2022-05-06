@@ -7,7 +7,7 @@ import { Context, Markup, Telegraf } from 'telegraf';
 export enum CommandsEnum {
   Search = 'search',
   Settings = 'settings',
-  Popular = 'popular',
+  Joke = 'Joke',
   Feedback = 'feedback',
   Ads = 'ads',
 }
@@ -20,7 +20,9 @@ export class CommandsService implements OnModuleInit {
     @Inject(TELEGRAF_BOT_NAME)
     private readonly botName: string,
     private readonly moduleRef: ModuleRef,
-  ) {}
+  ) {
+    this.startCommand = this.startCommand.bind(this);
+  }
 
   listenCommands() {
     this.bot.start(this.startCommand);
@@ -33,8 +35,7 @@ export class CommandsService implements OnModuleInit {
       ctx.reply(CommandsEnum.Settings);
       ctx.answerCbQuery();
     });
-    this.bot.action(CommandsEnum.Popular, (ctx) => {
-      ctx.reply(CommandsEnum.Popular);
+    this.bot.action(CommandsEnum.Joke, (ctx) => {
       ctx.answerCbQuery();
     });
     this.bot.action(CommandsEnum.Feedback, (ctx) => {
@@ -49,7 +50,7 @@ export class CommandsService implements OnModuleInit {
     this.bot.hears('🔍 Menu', this.menuHandler);
   }
 
-  startCommand(ctx: Context): void {
+  async startCommand(ctx: Context) {
     ctx.reply(
       'Welcome!',
       Markup.keyboard([[Markup.button.text('🔍 Menu')]]).resize(),
@@ -65,10 +66,11 @@ export class CommandsService implements OnModuleInit {
           Markup.button.callback('☸ Setting', CommandsEnum.Settings),
         ],
         [
-          Markup.button.callback('🤩 Popular', CommandsEnum.Popular),
+          Markup.button.callback('🤩 Joke', CommandsEnum.Joke),
           Markup.button.callback('🥶Feedback', CommandsEnum.Feedback),
           Markup.button.callback('🧠Adds', CommandsEnum.Ads),
         ],
+        [Markup.button.webApp('WebApp', 'https://youtube.com')],
       ]),
     );
   }
@@ -77,6 +79,10 @@ export class CommandsService implements OnModuleInit {
     this.bot = this.moduleRef.get<Telegraf<any>>(this.botName, {
       strict: false,
     });
-    this.listenCommands();
+    this.bot.telegram.setMyCommands([
+      { command: '/help', description: 'Help' },
+      { command: '/custom', description: 'Custom command' },
+    ]),
+      this.listenCommands();
   }
 }

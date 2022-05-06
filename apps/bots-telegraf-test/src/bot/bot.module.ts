@@ -8,6 +8,7 @@ import {
   Type,
 } from '@nestjs/common';
 import { DiscoveryModule, ModuleRef } from '@nestjs/core';
+import { CommandsModule } from './commands/commands.module';
 import {
   TelegrafModuleAsyncOptions,
   TelegrafModuleOptions,
@@ -18,12 +19,13 @@ import {
   TELEGRAF_BOT_NAME,
   TELEGRAF_MODULE_OPTIONS,
 } from './telegraf.constants';
+import { TextModule } from './text/text.module';
 import { createBotFactory } from './utils/create-bot-factory.util';
 import { getBotToken } from './utils/get-bot-token.util';
 
 @Global()
 @Module({
-  imports: [DiscoveryModule],
+  imports: [DiscoveryModule, CommandsModule, TextModule],
   providers: [],
 })
 export class TelegrafCoreModule implements OnApplicationShutdown {
