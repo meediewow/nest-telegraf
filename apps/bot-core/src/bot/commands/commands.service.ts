@@ -15,6 +15,8 @@ export enum CommandsEnum {
 @Injectable()
 export class CommandsService implements OnModuleInit {
   private bot: Telegraf<any>;
+  private arr: Array<null | { foo: string } | undefined> = [];
+  private res = this.arr.filter((i) => i.foo);
 
   constructor(
     @Inject(TELEGRAF_BOT_NAME)
@@ -26,7 +28,6 @@ export class CommandsService implements OnModuleInit {
 
   listenCommands() {
     this.bot.start(this.startCommand);
-
     this.bot.action(CommandsEnum.Search, (ctx) => {
       ctx.reply(CommandsEnum.Search);
       ctx.answerCbQuery();

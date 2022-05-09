@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package captcha;
+
+service CaptchaService {
+  rpc getCaptcha(CaptchaArgs) returns (Captcha);
+}
+
+message CaptchaArgs {}
+
+message Captcha {
+  string image = 1;
+  string answer = 2;
+}
