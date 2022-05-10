@@ -1,8 +1,7 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { TELEGRAF_BOT_NAME } from 'src/bot/telegraf.constants';
-
 import { Context, Telegraf } from 'telegraf';
+import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 
 @Injectable()
 export class TextService implements OnModuleInit {

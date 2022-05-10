@@ -12,7 +12,7 @@ async function bootstrap() {
     options: {
       package: 'captcha',
       url: '0.0.0.0:3001',
-      protoPath: resolve('dist/libs/protobufs/captcha.proto'),
+      protoPath: resolve('dist/libs/protobufs/protos/captcha.proto'),
     },
   });
   app.listen(() => {

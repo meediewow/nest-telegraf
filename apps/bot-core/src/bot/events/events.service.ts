@@ -2,13 +2,13 @@ import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { Client, ClientGrpc } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import { TELEGRAF_BOT_NAME } from 'src/bot/telegraf.constants';
 import * as moment from 'moment';
 import { Context, Markup, Telegraf } from 'telegraf';
-import { captchaServiceOptions } from '../options/grpc.options';
-import { getRandomInt } from '../utils/number.utils';
+import { getRandomInt } from '../core/utils/number.utils';
 import { Logger } from '@nestjs/common';
 import { CaptchaServiceClient } from '@app/protobufs';
+import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
+import { captchaServiceOptions } from '../options/grpc.options';
 
 interface IWaitCaptchaPayload {
   answer: string;
