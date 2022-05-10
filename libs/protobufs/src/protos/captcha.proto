@@ -4,6 +4,12 @@ package captcha;
 
 service CaptchaService {
   rpc getCaptcha(CaptchaArgs) returns (Captcha);
+  rpc getData(CaptchaArgs) returns (TestData);
+}
+
+message TestData {
+  string fact = 1;
+  int32 length = 2;
 }
 
 message CaptchaArgs {}

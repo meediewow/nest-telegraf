@@ -11,10 +11,17 @@
     "sourceMap": true,
     "baseUrl": ".",
     "incremental": true,
-    "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@app/protobufs": [
+        "../../libs/protobufs/src"
+      ],
+      "@app/protobufs/*": [
+        "../../libs/protobufs/src/*"
+      ]
+    }
   }
 }

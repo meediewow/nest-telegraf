@@ -1,2 +1,1 @@
-export * from './protobufs.module';
-export * from './protobufs.service';
+export * from './protos/captcha';

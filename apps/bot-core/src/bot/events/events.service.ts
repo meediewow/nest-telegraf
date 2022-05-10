@@ -5,9 +5,10 @@ import { firstValueFrom } from 'rxjs';
 import { TELEGRAF_BOT_NAME } from 'src/bot/telegraf.constants';
 import * as moment from 'moment';
 import { Context, Markup, Telegraf } from 'telegraf';
-import { CaptchaService } from '../interfaces/captcha-service.interface';
 import { captchaServiceOptions } from '../options/grpc.options';
 import { getRandomInt } from '../utils/number.utils';
+import { Logger } from '@nestjs/common';
+import { CaptchaServiceClient } from '@app/protobufs';
 
 interface IWaitCaptchaPayload {
   answer: string;
@@ -28,7 +29,7 @@ export class EventsService implements OnModuleInit {
   @Client(captchaServiceOptions)
   private client: ClientGrpc;
 
-  private captchaService: CaptchaService;
+  private captchaService: CaptchaServiceClient;
   private waitCaptcha: Map<number, IWaitCaptchaPayload> = new Map();
 
   constructor(
@@ -39,16 +40,24 @@ export class EventsService implements OnModuleInit {
     this.sendCaptcha = this.sendCaptcha.bind(this);
     this.enterMessage = this.enterMessage.bind(this);
     this.validateCaptcha = this.validateCaptcha.bind(this);
+    this.getFact = this.getFact.bind(this);
   }
 
   listenEvents() {
     this.bot.command('captcha', this.enterMessage);
+    this.bot.command('fact', this.getFact);
     this.bot.hears(/^(\-{0,1})[0-9]+$/, this.validateCaptcha);
     this.bot.on('new_chat_members', this.enterMessage);
     this.bot.action(/.+/, this.validateCaptcha);
   }
 
-  validateCaptcha(ctx: Context<any>) {
+  async getFact(ctx: Context) {
+    const data = await firstValueFrom(this.captchaService.getData({}));
+    ctx.reply('Fact: ' + data.fact);
+    ctx.reply('Lenght: ' + data.length);
+  }
+
+  async validateCaptcha(ctx: Context<any>) {
     const userId = ctx.from.id;
     const result = this.waitCaptcha.get(userId);
     const userChoice = ctx.callbackQuery.data;
@@ -61,7 +70,11 @@ export class EventsService implements OnModuleInit {
         if (triesLeft === 0) {
           this.waitCaptcha.delete(userId);
           ctx.reply('Тоби пизда');
-          ctx.banChatMember(userId, moment().add(30, 'minutes').unix());
+          try {
+            await ctx.banChatMember(userId, moment().add(30, 'minutes').unix());
+          } catch (err) {
+            Logger.error(err.message);
+          }
           ctx.answerCbQuery();
           return;
         } else {
@@ -108,7 +121,7 @@ export class EventsService implements OnModuleInit {
 
   onModuleInit(): void {
     this.captchaService =
-      this.client.getService<CaptchaService>('CaptchaService');
+      this.client.getService<CaptchaServiceClient>('CaptchaService');
 
     this.bot = this.moduleRef.get<Telegraf<any>>(this.botName, {
       strict: false,

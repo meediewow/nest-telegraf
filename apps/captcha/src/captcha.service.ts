@@ -1,5 +1,5 @@
+import { Captcha } from '@app/protobufs';
 import { Injectable } from '@nestjs/common';
-import { Captcha } from './captcha.interfaces';
 import * as canvas from 'canvas';
 import { getRandomInt, parseExpression } from './utils/number.utils';
 

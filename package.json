@@ -13,6 +13,7 @@
     "start:dev": "concurrently \"nest start bot-core --watch\" \"nest start captcha --watch\"",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "proto:generate": "protoc ./libs/protobufs/**/*/*.proto --ts_proto_opt=nestJs=true --ts_proto_opt=returnObservable=true --ts_proto_out=.",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -28,6 +29,7 @@
     "@nestjs/microservices": "^6.5.3",
     "@nestjs/platform-express": "^8.0.0",
     "@nestjs/schedule": "^1.1.0",
+    "axios": "^0.27.2",
     "canvas": "^2.9.1",
     "concurrently": "^7.1.0",
     "grpc": "^1.24.11",
@@ -36,7 +38,8 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
-    "telegraf": "^4.8.1"
+    "telegraf": "^4.8.1",
+    "ts-proto": "^1.112.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",
