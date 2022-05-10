@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TelegrafCoreModule } from './core/core.module';
 import { EventsModule } from './events/events.module';
+import { GamesModule } from './games/games.module';
+import { MenuModule } from './menu/menu.module';
 
+console.log(process.env.BOT_TOKEN);
 @Module({
   imports: [
     TelegrafCoreModule.forRootAsync({
@@ -9,13 +12,15 @@ import { EventsModule } from './events/events.module';
         return new Promise((resolve) => {
           setTimeout(() => {
             resolve({
-              token: '5376873227:AAFnj37RtcTvVyHboDTn8yGTRaxxGv17vXo',
+              token: process.env.BOT_TOKEN,
             });
-          }, 1000);
+          }, 100);
         });
       },
     }),
+    MenuModule,
     EventsModule,
+    GamesModule,
   ],
 })
 export class BotModule {}
