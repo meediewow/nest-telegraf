@@ -52,8 +52,8 @@ export class EventsService implements OnModuleInit {
   async validateCaptcha(ctx: Context<any>) {
     const userId = ctx.from.id;
     const result = this.waitCaptcha.get(userId);
-    const userChoice = ctx.callbackQuery.data;
     if (result) {
+      const userChoice = ctx.callbackQuery.data;
       if (result.triesLeft > 0 && userChoice === result.answer) {
         this.waitCaptcha.delete(userId);
         ctx.reply('Капча пройдена!');
@@ -78,8 +78,8 @@ export class EventsService implements OnModuleInit {
           this.sendCaptcha(ctx, triesLeft);
         }
       }
+      ctx.answerCbQuery();
     }
-    ctx.answerCbQuery();
   }
 
   enterMessage(ctx: Context) {
@@ -118,9 +118,7 @@ export class EventsService implements OnModuleInit {
     this.bot = this.moduleRef.get<Telegraf<any>>(this.botName, {
       strict: false,
     });
-    this.bot.telegram.setMyCommands([
-      { command: '/captcha', description: 'Custom command' },
-    ]),
-      this.listenEvents();
+
+    this.listenEvents();
   }
 }

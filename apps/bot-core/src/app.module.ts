@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BotModule } from './bot/bot.module';
-
+import { MongoDBModule } from './mongodb/mongodb.module';
+const envModule = ConfigModule.forRoot({
+  isGlobal: true,
+});
 @Module({
-  imports: [ScheduleModule.forRoot(), BotModule],
+  imports: [envModule, MongoDBModule, ScheduleModule.forRoot(), BotModule],
   controllers: [],
   providers: [],
 })

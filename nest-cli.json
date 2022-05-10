@@ -9,7 +9,6 @@
         "watchAssets": true
       }
     ],
-    "webpack": true,
     "tsConfigPath": "apps/bot-core/tsconfig.app.json"
   },
   "monorepo": true,
@@ -40,7 +39,6 @@
       "sourceRoot": "libs/protobufs/src",
       "compilerOptions": {
         "tsConfigPath": "libs/protobufs/tsconfig.lib.json",
-        "watchAssets": true,
         "assets": ["**/*.proto"]
       }
     }
