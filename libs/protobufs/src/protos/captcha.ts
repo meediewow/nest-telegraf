@@ -6,11 +6,6 @@ import { Observable } from 'rxjs';
 
 export const protobufPackage = 'captcha';
 
-export interface TestData {
-  fact: string;
-  length: number;
-}
-
 export interface CaptchaArgs {}
 
 export interface Captcha {
@@ -22,23 +17,17 @@ export const CAPTCHA_PACKAGE_NAME = 'captcha';
 
 export interface CaptchaServiceClient {
   getCaptcha(request: CaptchaArgs): Observable<Captcha>;
-
-  getData(request: CaptchaArgs): Observable<TestData>;
 }
 
 export interface CaptchaServiceController {
   getCaptcha(
     request: CaptchaArgs,
   ): Promise<Captcha> | Observable<Captcha> | Captcha;
-
-  getData(
-    request: CaptchaArgs,
-  ): Promise<TestData> | Observable<TestData> | TestData;
 }
 
 export function CaptchaServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ['getCaptcha', 'getData'];
+    const grpcMethods: string[] = ['getCaptcha'];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(
         constructor.prototype,

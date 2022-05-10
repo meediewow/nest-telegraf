@@ -13,7 +13,7 @@
     "start:dev": "concurrently \"nest start bot-core --watch\" \"nest start captcha --watch\"",
     "start:debug": "nest start --debug --watch",
     "start:prod": "concurrently \"node dist/apps/bot-core/main\" \"node dist/apps/captcha/main\" ",
-    "proto:generate": "protoc ./libs/protobufs/**/*/*.proto --ts_proto_opt=nestJs=true --ts_proto_opt=returnObservable=true --ts_proto_out=.",
+    "proto:generate": "protoc ./libs/protobufs/**/*/*.proto --ts_proto_opt=nestJs=true --ts_proto_out=. && nest build protobufs",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",

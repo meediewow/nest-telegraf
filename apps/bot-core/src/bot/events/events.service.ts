@@ -40,21 +40,13 @@ export class EventsService implements OnModuleInit {
     this.sendCaptcha = this.sendCaptcha.bind(this);
     this.enterMessage = this.enterMessage.bind(this);
     this.validateCaptcha = this.validateCaptcha.bind(this);
-    this.getFact = this.getFact.bind(this);
   }
 
   listenEvents() {
     this.bot.command('captcha', this.enterMessage);
-    this.bot.command('fact', this.getFact);
     this.bot.hears(/^(\-{0,1})[0-9]+$/, this.validateCaptcha);
     this.bot.on('new_chat_members', this.enterMessage);
     this.bot.action(/.+/, this.validateCaptcha);
-  }
-
-  async getFact(ctx: Context) {
-    const data = await firstValueFrom(this.captchaService.getData({}));
-    ctx.reply('Fact: ' + data.fact);
-    ctx.reply('Lenght: ' + data.length);
   }
 
   async validateCaptcha(ctx: Context<any>) {
