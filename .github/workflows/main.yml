@@ -27,6 +27,11 @@ jobs:
           echo DB_URL=${DB_URL} > .env
           echo CORE_PORT=${CORE_PORT} > .env
           echo CAPTCHA_SERVICE_PORT=${CAPTCHA_SERVICE_PORT} > .env
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          DB_URL: ${{ secrets.DB_URL }}
+          CORE_PORT: ${{ secrets.CORE_PORT }}
+          CAPTCHA_SERVICE_PORT: ${{ secrets.CAPTCHA_SERVICE_PORT }}
       - name: Build and push core
         uses: docker/build-push-action@v3
         with:
