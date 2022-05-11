@@ -50,14 +50,14 @@ jobs:
           build-args: |
             SERVICE_NAME=captcha
             NODE_PORT=${{ secrets.CAPTCHA_SERVICE_PORT }}
-  # deploy:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Restart docker-compose
-  #       uses: appleboy/ssh-action@master
-  #       with:
-  #         host: ${{ secrets.HOST }}
-  #         username: ${{ secrets.USERNAME }}
-  #         password: ${{ secrets.PASSWORD }}
-  #         port: ${{ secrets.PORT }}
-  #         script: cd docker-compose down && docker-compose pull && docker-compose up -d
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restart docker-compose
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: docker-compose down && docker-compose pull && docker-compose up -d
