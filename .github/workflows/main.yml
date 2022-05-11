@@ -23,21 +23,15 @@ jobs:
       - name: Create env file
         run: |
           touch .env
-          echo BOT_TOKEN=${BOT_TOKEN} > .env
-          echo DB_URL=${DB_URL} > .env
-          echo CORE_PORT=${CORE_PORT} > .env
-          echo CAPTCHA_SERVICE_PORT=${CAPTCHA_SERVICE_PORT} > .env
-          pwd
-          ls -a
+          echo BOT_TOKEN=${BOT_TOKEN} >> .env
+          echo DB_URL=${DB_URL} >> .env
+          echo CORE_PORT=${CORE_PORT} >> .env
+          echo CAPTCHA_SERVICE_PORT=${CAPTCHA_SERVICE_PORT} >> .env
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           DB_URL: ${{ secrets.DB_URL }}
           CORE_PORT: ${{ secrets.CORE_PORT }}
           CAPTCHA_SERVICE_PORT: ${{ secrets.CAPTCHA_SERVICE_PORT }}
-      - name: Create env file
-        run: |
-          ls -a
-          cat .env
       - name: Build and push core
         uses: docker/build-push-action@v3
         with:
