@@ -4,6 +4,8 @@ import { EventsModule } from './events/events.module';
 import { GamesModule } from './games/games.module';
 import { MenuModule } from './menu/menu.module';
 
+console.log(process.env.BOT_TOKEN, process.env.DB_URL, process.env.CORE_PORT);
+
 @Module({
   imports: [
     TelegrafCoreModule.forRootAsync({
