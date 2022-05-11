@@ -28,6 +28,7 @@ jobs:
           envkey_CORE_PORT: ${{ secrets.CORE_PORT }}
           envkey_CAPTCHA_SERVICE_PORT: ${{ secrets.CAPTCHA_SERVICE_PORT}}
           file_name: .env
+          directory: ../../
       - name: Build and push core
         uses: docker/build-push-action@v3
         with:
