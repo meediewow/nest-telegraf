@@ -6,7 +6,7 @@ on:
       - 'main'
 
 jobs:
-  docker:
+  build_core:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,15 +37,11 @@ jobs:
           context: .
           push: true
           tags: mididevich/floodik:latest
-        env:
-          SERVICE_NAME: bot-core
-          NODE_PORT: ${{ secrets.CORE_PORT }}
+          build-args: SERVICE_NAME=bot-core,NODE_PORT=${{ secrets.CORE_PORT }}
       - name: Build and push captcha
         uses: docker/build-push-action@v3
         with:
           context: .
           push: true
           tags: mididevich/captcha-service:latest
-        env:
-          SERVICE_NAME: captcha
-          NODE_PORT: ${{ secrets.CAPTCHA_SERVICE_PORT }}
+          build-args: SERVICE_NAME=captcha,NODE_PORT=${{ secrets.CAPTCHA_SERVICE_PORT }}
