@@ -19,7 +19,6 @@ WORKDIR /home/node/app
 
 COPY package*.json ./
 
-RUN npm install canvas@2.8.0
 RUN npm install && npm cache clean --force
 
 ARG SERVICE_NAME
