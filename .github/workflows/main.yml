@@ -37,6 +37,7 @@ jobs:
       - name: Create env file
         run: |
           ls -a
+          cat .env
       - name: Build and push core
         uses: docker/build-push-action@v3
         with:
