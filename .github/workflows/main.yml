@@ -23,12 +23,14 @@ jobs:
       - name: Create env file
         run: |
           touch .env
-          echo PROD_ENV=${PROD_ENV} > .env
+          echo BOT_TOKEN=${BOT_TOKEN} > .env
+          echo DB_URL=${DB_URL} > .env
           echo CORE_PORT=${CORE_PORT} > .env
           echo CAPTCHA_SERVICE_PORT=${CAPTCHA_SERVICE_PORT} > .env
           cat .env
         env:
-          PROD_ENV: ${{ secrets.PROD_ENV }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          DB_URL: ${{ secrets.DB_URL }}
           CORE_PORT: ${{ secrets.CORE_PORT }}
           CAPTCHA_SERVICE_PORT: ${{ secrets.CAPTCHA_SERVICE_PORT }}
       - name: Build and push core
