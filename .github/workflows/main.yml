@@ -29,9 +29,9 @@ jobs:
           build-args: |
             SERVICE_NAME=bot-core
             NODE_PORT=${{ secrets.CORE_PORT }}
-          env:
-            BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-            DB_URL: ${{ secrets.DB_URL }}
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          DB_URL: ${{ secrets.DB_URL }}
       - name: Build and push captcha
         uses: docker/build-push-action@v3
         with:
