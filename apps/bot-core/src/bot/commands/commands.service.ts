@@ -21,6 +21,13 @@ export class CommandsService implements OnModuleInit {
     });
     this.bot.telegram.setMyCommands([
       { command: '/menu', description: 'Открыть меню' },
+      { command: '/hunt', description: 'Игра "Охота" 🔫' },
+      { command: '/dig', description: 'Игра "Археолог" ⚒' },
+      { command: '/fish', description: 'Игра "Рыбалка" 🎣' },
+      { command: '/hunt_scores', description: 'Результаты охоты' },
+      { command: '/fish_scores', description: 'Результаты рыбалки' },
+      { command: '/dig_scores', description: 'Результаты археологии' },
+      { command: '/total_scores', description: 'Топ по всем играм' },
     ]);
   }
 }

@@ -49,6 +49,14 @@ export class GamesEngineService {
     return entities[getRandomInt(0, entities.length - 1)];
   }
 
+  private getRandomWeight(maxWeight: number): number {
+    const result = getRandomInt(0, maxWeight) - getRandomInt(0, maxWeight);
+    if (result > 0) {
+      return result;
+    }
+    return this.getRandomWeight(maxWeight);
+  }
+
   public async play(config: IPlay) {
     let gameStore = await this.gamesRepository.findOne({
       where: {
@@ -83,11 +91,11 @@ export class GamesEngineService {
     const currentResult = {
       place: this.getEntity(config.places),
       item: this.getEntity(config.items),
-      weight: getRandomInt(0, config.maxWeight),
+      weight: this.getRandomWeight(config.maxWeight),
       username: config.username,
     };
 
-    const isEmpty = getRandomInt(3, 1) !== 1;
+    const isEmpty = getRandomInt(1, 2) !== 1;
     await config.onMessage(config.getFirstMessage(currentResult.place));
 
     setTimeout(async () => {

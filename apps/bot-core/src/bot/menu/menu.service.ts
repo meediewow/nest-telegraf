@@ -36,7 +36,6 @@ export class MenuService implements OnModuleInit {
     this.bot = this.moduleRef.get<Telegraf<any>>(this.botName, {
       strict: false,
     });
-
     this.listenCommands();
   }
 }

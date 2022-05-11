@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
+import { CommandsModule } from './commands/commands.module';
 import { TelegrafCoreModule } from './core/core.module';
 import { EventsModule } from './events/events.module';
 import { GamesModule } from './games/games.module';
 import { MenuModule } from './menu/menu.module';
-
-console.log(process.env.BOT_TOKEN, process.env.DB_URL, process.env.CORE_PORT);
 
 @Module({
   imports: [
@@ -14,11 +13,18 @@ console.log(process.env.BOT_TOKEN, process.env.DB_URL, process.env.CORE_PORT);
           setTimeout(() => {
             resolve({
               token: process.env.BOT_TOKEN,
+              // launchOptions: {
+              //   webhook: {
+              //     domain: 'https://481c-93-125-10-95.eu.ngrok.io',
+              //     hookPath: '/secret-path',
+              //   },
+              // },
             });
           }, 100);
         });
       },
     }),
+    CommandsModule,
     MenuModule,
     EventsModule,
     GamesModule,
