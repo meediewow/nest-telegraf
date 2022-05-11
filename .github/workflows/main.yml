@@ -28,6 +28,7 @@ jobs:
           echo CORE_PORT=${CORE_PORT} > .env
           echo CAPTCHA_SERVICE_PORT=${CAPTCHA_SERVICE_PORT} > .env
           pwd
+          ls -a
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           DB_URL: ${{ secrets.DB_URL }}
