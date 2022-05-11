@@ -20,15 +20,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Create .env
-        uses: SpicyPizza/create-envfile@v1.3
-        with:
-          envkey_BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          envkey_DB_URL: ${{ secrets.DB_URL }}
-          envkey_CORE_PORT: ${{ secrets.CORE_PORT }}
-          envkey_CAPTCHA_SERVICE_PORT: ${{ secrets.CAPTCHA_SERVICE_PORT}}
-          file_name: .env
-          directory: ../../
       - name: Build and push core
         uses: docker/build-push-action@v3
         with:
@@ -38,6 +29,9 @@ jobs:
           build-args: |
             SERVICE_NAME=bot-core
             NODE_PORT=${{ secrets.CORE_PORT }}
+          env:
+            BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+            DB_URL: ${{ secrets.DB_URL }}
       - name: Build and push captcha
         uses: docker/build-push-action@v3
         with:
