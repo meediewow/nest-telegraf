@@ -5,7 +5,7 @@ export const captchaServiceOptions: ClientOptions = {
   transport: Transport.GRPC,
   options: {
     package: 'captcha',
-    url: '0.0.0.0:3001',
+    url: `0.0.0.0:${process.env.CAPTCHA_SERVICE_PORT || 3001}`,
     protoPath: resolve('dist/libs/protobufs/protos/captcha.proto'),
   },
 };
