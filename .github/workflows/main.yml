@@ -37,13 +37,15 @@ jobs:
           context: .
           push: true
           tags: mididevich/floodik:latest
-          build-args: SERVICE_NAME=bot-core
-          build-args: NODE_PORT=${{ secrets.CORE_PORT }}
+          build-args: |
+            SERVICE_NAME=bot-core
+            NODE_PORT=${{ secrets.CORE_PORT }}
       - name: Build and push captcha
         uses: docker/build-push-action@v3
         with:
           context: .
           push: true
           tags: mididevich/captcha-service:latest
-          build-args: SERVICE_NAME=captcha
-          build-args: NODE_PORT=${{ secrets.CAPTCHA_SERVICE_PORT }}
+          build-args: |
+            SERVICE_NAME=captcha
+            NODE_PORT=${{ secrets.CAPTCHA_SERVICE_PORT }}
