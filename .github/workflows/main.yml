@@ -36,6 +36,8 @@ jobs:
           CAPTCHA_SERVICE_PORT: ${{ secrets.CAPTCHA_SERVICE_PORT }}
       - name: Build and push core
         uses: docker/build-push-action@v3
+        run: |
+          ls -a
         with:
           context: .
           push: true
