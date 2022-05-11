@@ -20,6 +20,13 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Create env file
+        run: |
+          touch .env
+          echo BOT_TOKEN=${BOT_TOKEN} > .env
+          echo DB_URL=${DB_URL} > .env
+          echo CORE_PORT=${CORE_PORT} > .env
+          echo CAPTCHA_SERVICE_PORT=${CAPTCHA_SERVICE_PORT} > .env
       - name: Build and push core
         uses: docker/build-push-action@v3
         with:
@@ -29,9 +36,6 @@ jobs:
           build-args: |
             SERVICE_NAME=bot-core
             NODE_PORT=${{ secrets.CORE_PORT }}
-        env:
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          DB_URL: ${{ secrets.DB_URL }}
       - name: Build and push captcha
         uses: docker/build-push-action@v3
         with:
