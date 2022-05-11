@@ -34,10 +34,11 @@ jobs:
           DB_URL: ${{ secrets.DB_URL }}
           CORE_PORT: ${{ secrets.CORE_PORT }}
           CAPTCHA_SERVICE_PORT: ${{ secrets.CAPTCHA_SERVICE_PORT }}
-      - name: Build and push core
-        uses: docker/build-push-action@v3
+      - name: Create env file
         run: |
           ls -a
+      - name: Build and push core
+        uses: docker/build-push-action@v3
         with:
           context: .
           push: true
