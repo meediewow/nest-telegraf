@@ -1,0 +1,18 @@
+version: "3.9"  # optional since v1.27.0
+services:
+  captcha-service:
+    image: mididevich/captcha-service
+    restart: always
+    network_mode: host
+
+
+  floodik-core:
+    image: mididevich/floodik
+    restart: always
+    network_mode: host
+    depends_on:
+      - "captcha-service"
+
+networks:
+  floodik:
+    driver: host

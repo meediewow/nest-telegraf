@@ -24,5 +24,6 @@
         "libs/protobufs/src/*"
       ]
     }
-  }
+  },
+  "include": ["apps/**/*.ts"]
 }
