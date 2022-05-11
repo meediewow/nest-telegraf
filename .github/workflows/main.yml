@@ -51,6 +51,7 @@ jobs:
             SERVICE_NAME=captcha
             NODE_PORT=${{ secrets.CAPTCHA_SERVICE_PORT }}
   deploy:
+    needs: build_core
     runs-on: ubuntu-latest
     steps:
       - name: Restart docker-compose
