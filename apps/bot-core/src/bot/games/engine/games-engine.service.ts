@@ -91,7 +91,7 @@ export class GamesEngineService {
       username: config.username,
     };
 
-    const isEmpty = getRandomInt(1, 2) !== 1;
+    const isEmpty = getRandomInt(1, 3) === 1;
     await config.onMessage(config.getFirstMessage(currentResult.place));
 
     setTimeout(async () => {

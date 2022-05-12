@@ -62,11 +62,13 @@ jobs:
           echo DB_URL=${DB_URL} >> .env
           echo CORE_PORT=${CORE_PORT} >> .env
           echo CAPTCHA_SERVICE_PORT=${CAPTCHA_SERVICE_PORT} >> .env
+          echo SENTRY_DSN=${SENTRY_DSN} >> .env
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           DB_URL: ${{ secrets.DB_URL }}
           CORE_PORT: ${{ secrets.CORE_PORT }}
           CAPTCHA_SERVICE_PORT: ${{ secrets.CAPTCHA_SERVICE_PORT }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
       - name: Build and push captcha
         uses: docker/build-push-action@v3
         with:

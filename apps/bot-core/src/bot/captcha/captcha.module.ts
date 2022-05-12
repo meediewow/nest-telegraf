@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { EventsService } from './events.service';
+import { EventsService } from './captcha.service';
 
 @Module({
   imports: [],
   providers: [EventsService],
 })
-export class EventsModule {}
+export class CaptchaModule {}
