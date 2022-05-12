@@ -50,11 +50,7 @@ export class GamesEngineService {
   }
 
   private getRandomWeight(maxWeight: number): number {
-    const result = getRandomInt(0, maxWeight) - getRandomInt(0, maxWeight);
-    if (result > 0) {
-      return result;
-    }
-    return this.getRandomWeight(maxWeight);
+    return Math.round(getRandomInt(0, maxWeight) * Math.random());
   }
 
   public async play(config: IPlay) {
