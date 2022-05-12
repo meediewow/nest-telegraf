@@ -2,6 +2,7 @@ import { Inject, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { Context, Telegraf } from 'telegraf';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
+import { getUserMention } from '../utils/user';
 import { GamesEngineService } from './engine/games-engine.service';
 import { Games } from './types/games.enums';
 
@@ -82,19 +83,20 @@ export class ArcheologyService implements OnModuleInit {
       getFirstMessage: (place: string) =>
         `Вы начали раскопки ${place} и усиленно роете лопатами, экскаватором... Вам кажется что ваш совочек ударился обо что-то твердое. Может это клад?!`,
       getSecondMessage: (item: string, username: string, weight: number) =>
-        `Поздравляю, @${username}! Вы только что выкопали ${item}, возраст - ${weight} лет!`,
+        `Поздравляю, ${username}! Вы только что выкопали ${item}, возраст - ${weight} лет!`,
       getFailText: (place: string, username: string) =>
-        `По уши закопавшись ${place}, @${username}, нифига вы не выкопали! Может повезет в другом месте?`,
+        `По уши закопавшись ${place}, ${username}, нифига вы не выкопали! Может повезет в другом месте?`,
       getLoseText: (username: string) =>
-        `Извини, @${username}, но это не самая тяжелая находка!`,
+        `Извини, ${username}, но это не самая тяжелая находка!`,
       getWinText: (username: string) =>
-        `Поздравляю, @${username}, ты побил предыдущий рекорд!`,
+        `Поздравляю, ${username}, ты побил предыдущий рекорд!`,
       gameType: Games.Archeology,
       items: ITEMS,
       places: PLACES,
       maxWeight: MAX_WEIGHT,
-      onMessage: (message: string) => ctx.reply(message),
-      username: ctx.message.from.username || ctx.message.from.first_name,
+      onMessage: (message: string) =>
+        ctx.reply(message, { parse_mode: 'Markdown' }),
+      username: getUserMention(ctx.from),
     });
   }
 
@@ -103,13 +105,14 @@ export class ArcheologyService implements OnModuleInit {
       chatId: ctx.chat.id,
       gameType: Games.Archeology,
       getTopResultText: (username: string, item: string, weight: number) =>
-        `Игрок @${username} вырыл ${item}. Возраст артефакта ${weight} лет`,
+        `Игрок ${username} вырыл ${item}. Возраст артефакта ${weight} лет`,
       notTopText: 'Еще никто ничего не выкопал!',
       resultTitle: 'Самая лучшая раскопка:',
       getUserResultText: (item: string, weight: number) =>
         `Твоя лучшая находка: ${item}, возраст которой ${weight} лет`,
-      username: ctx.message.from.username || ctx.message.from.first_name,
-      onMessage: (message: string) => ctx.reply(message),
+      username: getUserMention(ctx.from),
+      onMessage: (message: string) =>
+        ctx.reply(message, { parse_mode: 'Markdown' }),
     });
   }
 

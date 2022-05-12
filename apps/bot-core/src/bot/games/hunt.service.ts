@@ -4,6 +4,7 @@ import { GamesEngineService } from './engine/games-engine.service';
 import { Games } from './types/games.enums';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 import { ModuleRef } from '@nestjs/core';
+import { getUserMention } from '../utils/user';
 
 const MAX_WEIGHT = 600;
 
@@ -66,19 +67,20 @@ export class HuntService implements OnModuleInit {
       getFirstMessage: (place: string) =>
         `Вы затаились в ${place} и поджидаете... Вы что-то слышите и стреляете в том направлении...`,
       getSecondMessage: (item: string, username: string, weight: number) =>
-        `Поздравляю, @${username}!  Вы только что положили в свой мешок ${item} весом в ${weight} кило!`,
+        `Поздравляю, ${username}!  Вы только что положили в свой мешок ${item} весом в ${weight} кило!`,
       getFailText: (place: string, username: string) =>
-        `Крысы... вы промахнулись, @${username}. Может потом повезет?`,
+        `Крысы... вы промахнулись, ${username}. Может потом повезет?`,
       getLoseText: (username: string) =>
-        `Извини, @${username}, но это не самая тяжелая находка!`,
+        `Извини, ${username}, но это не самая тяжелая находка!`,
       getWinText: (username: string) =>
-        `Поздравляю, @${username}, ты побил предыдущий рекорд!`,
+        `Поздравляю, ${username}, ты побил предыдущий рекорд!`,
       gameType: Games.Hunt,
       items: ITEMS,
       places: PLACES,
       maxWeight: MAX_WEIGHT,
-      onMessage: (message: string) => ctx.reply(message),
-      username: ctx.message.from.username || ctx.message.from.first_name,
+      onMessage: (message: string) =>
+        ctx.reply(message, { parse_mode: 'Markdown' }),
+      username: getUserMention(ctx.from),
     });
   }
 
@@ -87,13 +89,14 @@ export class HuntService implements OnModuleInit {
       chatId: ctx.chat.id,
       gameType: Games.Hunt,
       getTopResultText: (username: string, item: string, weight: number) =>
-        `Игрок @${username} застрелил ${item}. Вес: ${weight} кг`,
+        `Игрок ${username} застрелил ${item}. Вес: ${weight} кг`,
       notTopText: 'Еще никто никого не подстрелил!',
       resultTitle: 'Самая лучшая дичь:',
       getUserResultText: (item: string, weight: number) =>
         `Твоя лучшая добыча: ${item}, весом ${weight} кило!`,
-      username: ctx.message.from.username || ctx.message.from.first_name,
-      onMessage: (message: string) => ctx.reply(message),
+      username: getUserMention(ctx.from),
+      onMessage: (message: string) =>
+        ctx.reply(message, { parse_mode: 'Markdown' }),
     });
   }
 
