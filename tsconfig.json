@@ -25,5 +25,7 @@
       ]
     }
   },
-  "include": ["apps/**/*.ts"]
+  "include": [
+    "apps/**/*.ts"
+  ]
 }

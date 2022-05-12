@@ -10,8 +10,7 @@ async function bootstrap() {
     CaptchaModule,
     captchaServiceOptions,
   );
-  app.listen(() => {
-    logger.log('CaptchaService is listening...');
-  });
+  await app.listen();
+  logger.log('CaptchaService is listening...');
 }
 bootstrap();

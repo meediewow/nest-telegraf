@@ -24,10 +24,10 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.6.7",
     "@grpc/proto-loader": "^0.6.12",
-    "@nestjs/common": "^6.0.0",
+    "@nestjs/common": "^8.0.0",
     "@nestjs/config": "^2.0.0",
-    "@nestjs/core": "^6.0.0",
-    "@nestjs/microservices": "^6.5.3",
+    "@nestjs/core": "^8.0.0",
+    "@nestjs/microservices": "^8.4.4",
     "@nestjs/platform-express": "^8.0.0",
     "@nestjs/schedule": "^1.1.0",
     "@nestjs/typeorm": "^8.0.3",
