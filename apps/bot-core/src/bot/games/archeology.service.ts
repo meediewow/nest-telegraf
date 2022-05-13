@@ -64,7 +64,7 @@ const ITEMS = [
 ];
 
 export class ArcheologyService implements OnModuleInit {
-  private bot: Telegraf<any>;
+  private bot: Telegraf;
 
   constructor(
     @Inject(TELEGRAF_BOT_NAME)
@@ -122,7 +122,7 @@ export class ArcheologyService implements OnModuleInit {
   }
 
   onModuleInit(): void {
-    this.bot = this.moduleRef.get<Telegraf<any>>(this.botName, {
+    this.bot = this.moduleRef.get<Telegraf>(this.botName, {
       strict: false,
     });
     this.listenEvents();

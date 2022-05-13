@@ -4,17 +4,13 @@ import { Client, ClientGrpc } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import * as moment from 'moment';
 import { Context, Markup, Telegraf } from 'telegraf';
-import { getRandomInt } from '../core/utils/number.utils';
 import { Logger } from '@nestjs/common';
 import { CaptchaServiceClient } from '@app/protobufs';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 import { captchaServiceOptions } from '../options/grpc.options';
-import {
-  createCbData,
-  getActionPrefix,
-  parseCbData,
-} from '../utils/actions.utils';
 import { getUserMention } from '../utils/user.utils';
+import { getRandomInt } from '../utils/number.utils';
+import { ActionStore } from '../utils/actions-store.utils';
 
 interface ICaptchaPayload {
   answer: string;
@@ -44,12 +40,13 @@ const ACTION_PREFIX = 'captcha';
 
 @Injectable()
 export class EventsService implements OnModuleInit {
-  private bot: Telegraf<any>;
+  private bot: Telegraf;
   @Client(captchaServiceOptions)
   private client: ClientGrpc;
 
   private captchaService: CaptchaServiceClient;
   private waitCaptcha: Map<number, ICaptchaPayload[]> = new Map();
+  private actionsStore: ActionStore;
 
   constructor(
     @Inject(TELEGRAF_BOT_NAME)
@@ -59,21 +56,24 @@ export class EventsService implements OnModuleInit {
     this.sendCaptcha = this.sendCaptcha.bind(this);
     this.enterMessage = this.enterMessage.bind(this);
     this.validateCaptcha = this.validateCaptcha.bind(this);
+    this.actionsStore = new ActionStore(ACTION_PREFIX);
   }
 
   listenEvents() {
     this.bot.command('captcha', this.enterMessage);
     this.bot.hears(/^(\-{0,1})[0-9]+$/, this.validateCaptcha);
     this.bot.on('new_chat_members', this.enterMessage);
-    this.bot.action(getActionPrefix(ACTION_PREFIX), this.validateCaptcha);
+    this.bot.action(
+      this.actionsStore.getActionPrefixRegExp(),
+      this.validateCaptcha,
+    );
   }
 
   async validateCaptcha(ctx: Context) {
     const chatId = ctx.chat.id;
     if (ctx.callbackQuery) {
       const triggerUserId = ctx.callbackQuery.from.id;
-      const userChoice = parseCbData<ICallbackData>(
-        ACTION_PREFIX,
+      const userChoice = this.actionsStore.get<ICallbackData>(
         ctx.callbackQuery.data,
       );
       const userId = Number(userChoice.userId);
@@ -205,7 +205,7 @@ export class EventsService implements OnModuleInit {
                 .map((i) =>
                   Markup.button.callback(
                     i,
-                    createCbData(ACTION_PREFIX, {
+                    this.actionsStore.add({
                       answer: i,
                       userId,
                     }),
@@ -252,7 +252,7 @@ export class EventsService implements OnModuleInit {
     this.captchaService =
       this.client.getService<CaptchaServiceClient>('CaptchaService');
 
-    this.bot = this.moduleRef.get<Telegraf<any>>(this.botName, {
+    this.bot = this.moduleRef.get<Telegraf>(this.botName, {
       strict: false,
     });
 

@@ -5,7 +5,7 @@ import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 
 @Injectable()
 export class MenuService implements OnModuleInit {
-  private bot: Telegraf<any>;
+  private bot: Telegraf;
 
   constructor(
     @Inject(TELEGRAF_BOT_NAME)
@@ -27,13 +27,12 @@ export class MenuService implements OnModuleInit {
         [Markup.button.text('/fish'), Markup.button.text('/fish_scores')],
         [Markup.button.text('/dig'), Markup.button.text('/dig_scores')],
         [Markup.button.text('/total_scores')],
-        [Markup.button.text('/captcha')],
       ]).resize(),
     );
   }
 
   onModuleInit(): void {
-    this.bot = this.moduleRef.get<Telegraf<any>>(this.botName, {
+    this.bot = this.moduleRef.get<Telegraf>(this.botName, {
       strict: false,
     });
     this.listenCommands();

@@ -4,6 +4,18 @@ export const getRandomInt = (min, max): number => {
   return Math.round(Math.random() * (max - min) + min);
 };
 
+export const generateId = (): string => {
+  const timestamp = ((new Date().getTime() / 1000) | 0).toString(16);
+  return (
+    timestamp +
+    'xxxxxxxxxxxxxxxx'
+      .replace(/[x]/g, function () {
+        return ((Math.random() * 16) | 0).toString(16);
+      })
+      .toLowerCase()
+  );
+};
+
 export const parseExpression = (
   first: number | string,
   second: number | string,

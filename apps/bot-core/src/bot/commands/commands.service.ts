@@ -5,7 +5,7 @@ import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 
 @Injectable()
 export class CommandsService implements OnModuleInit {
-  private bot: Telegraf<any>;
+  private bot: Telegraf;
   private arr: Array<null | { foo: string } | undefined> = [];
   private res = this.arr.filter((i) => i.foo);
 
@@ -16,7 +16,7 @@ export class CommandsService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.bot = this.moduleRef.get<Telegraf<any>>(this.botName, {
+    this.bot = this.moduleRef.get<Telegraf>(this.botName, {
       strict: false,
     });
     this.bot.telegram.setMyCommands([

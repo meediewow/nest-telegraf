@@ -8,7 +8,7 @@ import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 import { ModuleRef } from '@nestjs/core';
 
 export class ScoresService {
-  private bot: Telegraf<any>;
+  private bot: Telegraf;
 
   constructor(
     @Inject(TELEGRAF_BOT_NAME)
@@ -69,7 +69,7 @@ export class ScoresService {
   }
 
   onModuleInit(): void {
-    this.bot = this.moduleRef.get<Telegraf<any>>(this.botName, {
+    this.bot = this.moduleRef.get<Telegraf>(this.botName, {
       strict: false,
     });
     this.listenEvents();

@@ -8,6 +8,7 @@ import {
   Type,
 } from '@nestjs/common';
 import { DiscoveryModule, ModuleRef } from '@nestjs/core';
+import { Telegraf } from 'telegraf';
 // import { CommandsModule } from './commands/commands.module';
 // import { TextModule } from './text/text.module';
 import {
@@ -103,7 +104,7 @@ export class TelegrafCoreModule implements OnApplicationShutdown {
   }
 
   async onApplicationShutdown(): Promise<void> {
-    const bot = this.moduleRef.get<any>(this.botName);
+    const bot = this.moduleRef.get<Telegraf>(this.botName);
     bot && (await bot.stop());
   }
 
