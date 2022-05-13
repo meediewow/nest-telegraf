@@ -93,7 +93,9 @@ export class EventsService implements OnModuleInit {
       }
 
       if (userId !== triggerUserId && !isTriggeredAdmin) {
-        ctx.answerCbQuery();
+        ctx.answerCbQuery('Капча предоставлена для другого пользователя', {
+          show_alert: true,
+        });
         return;
       }
 
@@ -111,6 +113,10 @@ export class EventsService implements OnModuleInit {
             channelWaitCaptcha.filter((i) => i.chatId !== chatId),
           );
           clearTimeout(userCaptcha.banTimer);
+          ctx.answerCbQuery('Добро пожаловать', {
+            show_alert: true,
+          });
+          return;
         } else {
           const triesLeft = userCaptcha.triesLeft - 1;
           if (triesLeft === 0) {
@@ -124,11 +130,17 @@ export class EventsService implements OnModuleInit {
                 ctx.deleteMessage(msg);
               });
               clearTimeout(userCaptcha.banTimer);
+              await ctx.answerCbQuery(
+                `Ты не прошел капчу, время бана: ${BAN_MINUTES} минут`,
+                {
+                  show_alert: true,
+                },
+              );
               await this.banUser(userId, userCaptcha.chatId);
             } catch (err) {
               Logger.error(err.message);
+              ctx.answerCbQuery();
             }
-            ctx.answerCbQuery();
             return;
           } else {
             const errorText = `${
@@ -140,7 +152,6 @@ export class EventsService implements OnModuleInit {
       } catch (e) {
         Logger.error(e, 'validate error');
       }
-      ctx.answerCbQuery();
     }
   }
 
