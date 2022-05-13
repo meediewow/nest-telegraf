@@ -4,14 +4,9 @@ import { TelegrafCoreModule } from './core/core.module';
 import { CaptchaModule } from './captcha/captcha.module';
 import { GamesModule } from './games/games.module';
 import { MenuModule } from './menu/menu.module';
-import { SentryModule } from '@ntegral/nestjs-sentry';
 
 @Module({
   imports: [
-    SentryModule.forRoot({
-      dsn: process.env.SENTRY_DSN,
-      tracesSampleRate: 1.0,
-    }),
     TelegrafCoreModule.forRootAsync({
       useFactory: async () => {
         return new Promise((resolve) => {

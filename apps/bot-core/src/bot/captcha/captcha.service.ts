@@ -28,7 +28,6 @@ interface ICaptchaPayload {
 interface ICallbackData {
   answer: string;
   userId: number;
-  chatId: number;
 }
 
 const CAPTCHA_TRIES = 3;
@@ -71,9 +70,13 @@ export class EventsService implements OnModuleInit {
 
   async validateCaptcha(ctx: Context) {
     const chatId = ctx.chat.id;
-
     if (ctx.callbackQuery) {
-      const userId = ctx.callbackQuery.from.id;
+      const triggerUserId = ctx.callbackQuery.from.id;
+      const userChoice = parseCbData<ICallbackData>(
+        ACTION_PREFIX,
+        ctx.callbackQuery.data,
+      );
+      const userId = Number(userChoice.userId);
       const channelWaitCaptcha = this.waitCaptcha.get(chatId);
       const userCaptcha = channelWaitCaptcha?.find(
         (captcha) => captcha.userId === userId,
@@ -82,19 +85,19 @@ export class EventsService implements OnModuleInit {
       try {
         isTriggeredAdmin = Boolean(
           (await this.bot.telegram.getChatAdministrators(chatId)).find(
-            (a) => a.user.id === userId,
+            (a) => a.user.id === triggerUserId,
           ),
         );
       } catch (e) {
         isTriggeredAdmin = false;
       }
 
-      try {
-        const userChoice = parseCbData<ICallbackData>(
-          ACTION_PREFIX,
-          ctx.callbackQuery.data,
-        );
+      if (userId !== triggerUserId && !isTriggeredAdmin) {
+        ctx.answerCbQuery();
+        return;
+      }
 
+      try {
         if (
           isTriggeredAdmin ||
           (userCaptcha.triesLeft > 0 &&
@@ -103,11 +106,18 @@ export class EventsService implements OnModuleInit {
           userCaptcha.enterMessageIds.forEach((msg) => {
             this.bot.telegram.deleteMessage(ctx.chat.id, msg);
           });
-          this.waitCaptcha.delete(userId);
+          this.waitCaptcha.set(
+            chatId,
+            channelWaitCaptcha.filter((i) => i.chatId !== chatId),
+          );
           clearTimeout(userCaptcha.banTimer);
         } else {
           const triesLeft = userCaptcha.triesLeft - 1;
           if (triesLeft === 0) {
+            this.waitCaptcha.set(
+              chatId,
+              channelWaitCaptcha.filter((i) => i.chatId !== chatId),
+            );
             this.waitCaptcha.delete(userId);
             try {
               userCaptcha.enterMessageIds.forEach((msg) => {
@@ -124,7 +134,7 @@ export class EventsService implements OnModuleInit {
             const errorText = `${
               ERROR_MESSAGES[getRandomInt(0, ERROR_MESSAGES.length - 1)]
             } Осталось попыток: ${triesLeft}`;
-            this.sendCaptcha(ctx, triesLeft, errorText);
+            this.sendCaptcha(ctx, triesLeft, userId, errorText);
           }
         }
       } catch (e) {
@@ -147,16 +157,16 @@ export class EventsService implements OnModuleInit {
   }
 
   enterMessage(ctx: Context) {
-    this.sendCaptcha(ctx);
+    this.sendCaptcha(ctx, undefined);
   }
 
   async sendCaptcha(
     ctx: Context,
     triesLeft = CAPTCHA_TRIES,
+    userId = ctx.from.id,
     imageText?: string,
   ) {
     const captcha = await firstValueFrom(this.captchaService.getCaptcha({}));
-    const userId = ctx.from.id || ctx.callbackQuery.from.id;
     const chatId = ctx.chat.id || ctx.chat.id;
     const defaultText = `Велкам, ${getUserMention(
       ctx.from || ctx.callbackQuery.from,
@@ -180,7 +190,7 @@ export class EventsService implements OnModuleInit {
                   .fill(null)
                   .map(() => String(getRandomInt(-100, 100))),
               ]
-                .filter((a, b) => Number(a) - Number(b))
+                .sort((a, b) => Number(a) - Number(b))
                 .map((i) =>
                   Markup.button.callback(
                     i,
@@ -196,7 +206,7 @@ export class EventsService implements OnModuleInit {
       )
       .then((msg) => {
         const channelCaptcha = this.waitCaptcha.get(chatId) || [];
-        const userCaptcha = channelCaptcha?.find((i) => i.chatId === userId);
+        const userCaptcha = channelCaptcha?.find((i) => i.userId === userId);
         if (userCaptcha) {
           this.waitCaptcha.set(chatId, [
             ...channelCaptcha.filter((i) => i.chatId !== chatId),
@@ -213,13 +223,14 @@ export class EventsService implements OnModuleInit {
           }, SECONDS_BEFORE_BAN * 1000);
 
           this.waitCaptcha.set(chatId, [
+            ...channelCaptcha,
             {
               userId,
               answer: captcha.answer,
               triesLeft,
               banTimer,
               chatId,
-              enterMessageIds: [msg.message_id],
+              enterMessageIds: [ctx.message.message_id, msg.message_id],
             },
           ]);
         }

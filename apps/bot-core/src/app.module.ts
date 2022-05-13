@@ -3,11 +3,23 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BotModule } from './bot/bot.module';
 import { MongoDBModule } from './mongodb/mongodb.module';
+import { SentryModule } from '@ntegral/nestjs-sentry';
+
 const envModule = ConfigModule.forRoot({
   isGlobal: true,
 });
+
 @Module({
-  imports: [envModule, MongoDBModule, ScheduleModule.forRoot(), BotModule],
+  imports: [
+    envModule,
+    SentryModule.forRoot({
+      dsn: process.env.SENTRY_DSN,
+      tracesSampleRate: 1.0,
+    }),
+    MongoDBModule,
+    ScheduleModule.forRoot(),
+    BotModule,
+  ],
   controllers: [],
   providers: [],
 })
