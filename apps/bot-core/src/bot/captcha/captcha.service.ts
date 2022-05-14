@@ -44,6 +44,8 @@ export class EventsService implements OnModuleInit {
   @Client(captchaServiceOptions)
   private client: ClientGrpc;
 
+  private readonly logger = new Logger(EventsService.name);
+
   private captchaService: CaptchaServiceClient;
   private waitCaptcha: Map<number, ICaptchaPayload[]> = new Map();
   private actionsStore: ActionStore;
@@ -60,7 +62,7 @@ export class EventsService implements OnModuleInit {
   }
 
   listenEvents() {
-    this.bot.command('captcha', this.enterMessage);
+    // this.bot.command('captcha', this.enterMessage);
     this.bot.hears(/^(\-{0,1})[0-9]+$/, this.validateCaptcha);
     this.bot.on('new_chat_members', this.enterMessage);
     this.bot.action(
@@ -113,6 +115,11 @@ export class EventsService implements OnModuleInit {
             channelWaitCaptcha.filter((i) => i.chatId !== chatId),
           );
           clearTimeout(userCaptcha.banTimer);
+          this.bot.telegram.restrictChatMember(chatId, userId, {
+            permissions: {
+              can_send_messages: true,
+            },
+          });
           ctx.answerCbQuery('Добро пожаловать', {
             show_alert: true,
           });
@@ -229,10 +236,19 @@ export class EventsService implements OnModuleInit {
             },
           ]);
         } else {
+          try {
+            this.bot.telegram.restrictChatMember(chatId, userId, {
+              permissions: {
+                can_send_messages: false,
+              },
+            });
+          } catch (error) {
+            this.logger.error(error);
+          }
+
           const banTimer = setTimeout(() => {
             this.banUser(userId, chatId);
           }, SECONDS_BEFORE_BAN * 1000);
-
           this.waitCaptcha.set(chatId, [
             ...channelCaptcha,
             {
