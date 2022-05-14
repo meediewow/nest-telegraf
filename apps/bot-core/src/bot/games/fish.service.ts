@@ -91,7 +91,7 @@ export class FishService implements OnModuleInit {
       getFirstMessage: (place: string) =>
         `Вы забрасываете бамбуковую удочку в ${place}. Вы чувствуете поклевку и начинаете быстро тащить что-то из воды`,
       getSecondMessage: (item: string, username: string, weight: number) =>
-        `Поздравляю, ${username}! Вы только что выкопали ${item}, возраст - ${weight} лет!`,
+        `Поздравляю, ${username}! Вы только что выловили ${item} весом ${weight} кило!`,
       getFailText: (place: string, username: string) =>
         `Черт, твоя рыбка сорвалась, ${username}. Не беда, может потом повезет?`,
       getLoseText: (username: string) =>
