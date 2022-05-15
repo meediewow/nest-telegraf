@@ -22,7 +22,7 @@ const LOWER_LEVEL = -50;
 const HEARS_REGEXP = /^(\-|\+)/;
 const DELAY = 5; //sec
 const TOP_LENGTH = 10;
-const TIME_TO_DELETE = 10; //sec
+const TIME_TO_DELETE = 5 * 60; //sec
 
 @Injectable()
 export class KarmaService implements OnModuleInit {
@@ -326,7 +326,9 @@ export class KarmaService implements OnModuleInit {
             .reply(
               `Вы увеличили карму ${getUserMention(
                 targetUser,
-              )} до ${updatedKarma} (+${updatedKarma - targetUserKarma})`,
+              )} до ${updatedKarma} (+${Number(
+                (updatedKarma - targetUserKarma).toFixed(2),
+              )})`,
               { parse_mode: 'Markdown' },
             )
             .then((msg) => {
@@ -344,7 +346,9 @@ export class KarmaService implements OnModuleInit {
             .reply(
               `Вы уменьшили карму ${getUserMention(
                 targetUser,
-              )} до ${updatedKarma} (-${targetUserKarma - updatedKarma})`,
+              )} до ${updatedKarma} (-${Number(
+                (targetUserKarma - updatedKarma).toFixed(2),
+              )})`,
               { parse_mode: 'Markdown' },
             )
             .then((msg) => {
