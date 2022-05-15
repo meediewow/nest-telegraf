@@ -22,6 +22,7 @@ const LOWER_LEVEL = -50;
 const HEARS_REGEXP = /^(\-|\+)/;
 const DELAY = 5; //sec
 const TOP_LENGTH = 10;
+const TIME_TO_DELETE = 10; //sec
 
 @Injectable()
 export class KarmaService implements OnModuleInit {
@@ -193,13 +194,12 @@ export class KarmaService implements OnModuleInit {
   }
 
   async off(ctx: Context) {
-    const update = ctx.callbackQuery;
     const chatId = ctx.chat?.id;
     if (!chatId) {
       return;
     }
     const isAdmin = await this.checkAdmin(ctx.callbackQuery?.from.id, chatId);
-    if (isAdmin && update) {
+    if (isAdmin) {
       const chat = await this.chatRepository.findOne({
         where: { chatId },
       });
@@ -314,17 +314,44 @@ export class KarmaService implements OnModuleInit {
 
       switch (message.text.trim()[0]) {
         case '+': {
+          const updatedKarma = Number(
+            (targetUserKarma + Math.sqrt(triggerUserKarma)).toFixed(2),
+          );
           this.changeKarma(
             chatId,
             targetUser,
             Number((targetUserKarma + Math.sqrt(triggerUserKarma)).toFixed(2)),
           );
+          ctx
+            .reply(
+              `Вы увеличили карму ${getUserMention(
+                targetUser,
+              )} до ${updatedKarma} (+${updatedKarma - targetUserKarma})`,
+              { parse_mode: 'Markdown' },
+            )
+            .then((msg) => {
+              setTimeout(() => {
+                this.bot.telegram.deleteMessage(chatId, msg.message_id);
+              }, TIME_TO_DELETE * 1000);
+            });
           break;
         }
         case '-': {
           const updatedKarma = Number(
             (targetUserKarma - Math.sqrt(triggerUserKarma)).toFixed(2),
           );
+          ctx
+            .reply(
+              `Вы уменьшили карму ${getUserMention(
+                targetUser,
+              )} до ${updatedKarma} (-${targetUserKarma - updatedKarma})`,
+              { parse_mode: 'Markdown' },
+            )
+            .then((msg) => {
+              setTimeout(() => {
+                this.bot.telegram.deleteMessage(chatId, msg.message_id);
+              }, TIME_TO_DELETE * 1000);
+            });
           if (updatedKarma <= LOWER_LEVEL) {
             if (chat?.karma.isRestrictionsEnabled) {
               const restrictionDays =
@@ -337,12 +364,12 @@ export class KarmaService implements OnModuleInit {
                 )}, Ваша карма упала ниже ${LOWER_LEVEL}. Возможность отправки сообщений ограничена на ${restrictionDays} дней.`,
                 { parse_mode: 'Markdown' },
               );
-              const unilData = moment().add(restrictionDays, 'days').unix();
+              const untilData = moment().add(restrictionDays, 'days').unix();
               this.bot.telegram.restrictChatMember(chatId, targetUser?.id, {
                 permissions: {
                   can_send_messages: false,
                 },
-                until_date: unilData,
+                until_date: untilData,
               });
               this.karmaRepository.findOneAndUpdate(
                 {
@@ -351,7 +378,7 @@ export class KarmaService implements OnModuleInit {
                 },
                 {
                   $set: {
-                    lastRestrictionUntil: unilData,
+                    lastRestrictionUntil: untilData,
                   },
                   $push: {
                     restrictions: {
