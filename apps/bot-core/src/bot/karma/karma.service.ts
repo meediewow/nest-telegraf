@@ -288,15 +288,15 @@ export class KarmaService implements OnModuleInit {
       userDelays.find((i) => i.targetId === targetUser.id),
     );
 
-    const userKarma = (await this.karmaRepository.findOne({
+    const userKarma = await this.karmaRepository.findOne({
       where: {
         userId: targetUser.id,
         chatId,
       },
-    })) as Karma;
+    });
 
     const hasActiveRestriction =
-      userKarma.lastRestrictionUntil &&
+      userKarma?.lastRestrictionUntil &&
       userKarma.lastRestrictionUntil >= moment().unix();
 
     if (hasTargetDelay || hasActiveRestriction) {
@@ -359,7 +359,7 @@ export class KarmaService implements OnModuleInit {
           if (updatedKarma <= LOWER_LEVEL) {
             if (chat?.karma.isRestrictionsEnabled) {
               const restrictionDays =
-                (userKarma.restrictions.sort(
+                (userKarma?.restrictions.sort(
                   (a, b) => b.periodDays - a.periodDays,
                 )[0].periodDays || 0) + RESTRICTION_DAYS;
               ctx.reply(
