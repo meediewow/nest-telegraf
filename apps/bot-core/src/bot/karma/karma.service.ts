@@ -47,6 +47,7 @@ export class KarmaService implements OnModuleInit {
     this.myKarma = this.myKarma.bind(this);
     this.topKarma = this.topKarma.bind(this);
     this.change = this.change.bind(this);
+    this.off = this.off.bind(this);
   }
 
   private async getUserKarma(
@@ -147,7 +148,7 @@ export class KarmaService implements OnModuleInit {
       const chat = await this.chatRepository.findOne({
         where: { chatId },
       });
-      if (!chat?.karma?.isEnabled) {
+      if (!chat) {
         await this.chatRepository.save({
           chatId,
           karma: {
@@ -156,9 +157,64 @@ export class KarmaService implements OnModuleInit {
             isRestrictionsEnabled: IS_RESTRICTIONS_ENABLED,
           },
         });
-        ctx.answerCbQuery('Успешно активировано!', { show_alert: true });
+      } else if (!chat.karma) {
+        await this.chatRepository.updateOne(
+          {
+            chatId,
+          },
+          {
+            $set: {
+              karma: {
+                isEnabled: true,
+                initKarma: INIT_KARMA,
+                isRestrictionsEnabled: IS_RESTRICTIONS_ENABLED,
+              },
+            },
+          },
+        );
+      } else if (!chat.karma.isEnabled) {
+        await this.chatRepository.updateOne(
+          {
+            chatId,
+          },
+          {
+            $set: {
+              'karma.isEnabled': true,
+            },
+          },
+        );
       } else {
         ctx.answerCbQuery('Уже активировано!', { show_alert: true });
+      }
+      ctx.answerCbQuery('Успешно активировано!', { show_alert: true });
+    } else {
+      ctx.answerCbQuery('Нужно обладать правами админа', { show_alert: true });
+    }
+  }
+
+  async off(ctx: Context) {
+    const update = ctx.callbackQuery;
+    const chatId = ctx.chat?.id;
+    if (!chatId) {
+      return;
+    }
+    const isAdmin = await this.checkAdmin(ctx.callbackQuery?.from.id, chatId);
+    if (isAdmin && update) {
+      const chat = await this.chatRepository.findOne({
+        where: { chatId },
+      });
+      if (chat?.karma?.isEnabled) {
+        this.chatRepository.updateOne(
+          {
+            _id: chat.id,
+          },
+          {
+            $set: {
+              'karma.isEnabled': false,
+            },
+          },
+        );
+        ctx.answerCbQuery('Успешно деактивировано!', { show_alert: true });
       }
     } else {
       ctx.answerCbQuery('Нужно обладать правами админа', { show_alert: true });
@@ -364,6 +420,7 @@ export class KarmaService implements OnModuleInit {
     this.bot.action(KarmaActionsEnum.ON, this.init);
     this.bot.action(KarmaActionsEnum.MY, this.myKarma);
     this.bot.action(KarmaActionsEnum.TOP, this.topKarma);
+    this.bot.action(KarmaActionsEnum.OFF, this.off);
     this.bot.hears(HEARS_REGEXP, this.change);
   }
 
