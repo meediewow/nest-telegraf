@@ -48,7 +48,7 @@ const ITEMS = [
 ];
 
 export class HuntService implements OnModuleInit {
-  private bot: Telegraf;
+  private bot!: Telegraf;
 
   constructor(
     @Inject(TELEGRAF_BOT_NAME)
@@ -62,7 +62,7 @@ export class HuntService implements OnModuleInit {
 
   async play(ctx: Context) {
     this.gamesEngineService.play({
-      chatId: ctx.chat.id,
+      chatId: ctx.chat?.id as number,
       cooldownText: 'Снаряжаем патроны...',
       getFirstMessage: (place: string) =>
         `Вы затаились в ${place} и поджидаете... Вы что-то слышите и стреляете в том направлении...`,
@@ -86,7 +86,7 @@ export class HuntService implements OnModuleInit {
 
   async scores(ctx: Context) {
     this.gamesEngineService.getResult({
-      chatId: ctx.chat.id,
+      chatId: ctx.chat?.id as number,
       gameType: Games.Hunt,
       getTopResultText: (username: string, item: string, weight: number) =>
         `Игрок ${username} застрелил ${item}. Вес: ${weight} кг`,

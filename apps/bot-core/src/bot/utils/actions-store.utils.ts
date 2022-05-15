@@ -26,4 +26,8 @@ export class ActionStore {
   public getActionPrefixRegExp = (): RegExp => {
     return new RegExp(`^${this.prefix}_`);
   };
+
+  public getActionRegExp = (action: string): RegExp => {
+    return new RegExp(`^${this.prefix}_${action}`);
+  };
 }

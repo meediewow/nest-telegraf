@@ -5,9 +5,8 @@ import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 
 @Injectable()
 export class CommandsService implements OnModuleInit {
-  private bot: Telegraf;
+  private bot!: Telegraf;
   private arr: Array<null | { foo: string } | undefined> = [];
-  private res = this.arr.filter((i) => i.foo);
 
   constructor(
     @Inject(TELEGRAF_BOT_NAME)
@@ -28,6 +27,7 @@ export class CommandsService implements OnModuleInit {
       { command: '/fish_scores', description: 'Результаты рыбалки' },
       { command: '/dig_scores', description: 'Результаты археологии' },
       { command: '/total_scores', description: 'Топ по всем играм' },
+      { command: '/karma', description: 'Управление кармой' },
     ]);
   }
 }

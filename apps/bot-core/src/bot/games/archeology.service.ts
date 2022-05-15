@@ -64,7 +64,7 @@ const ITEMS = [
 ];
 
 export class ArcheologyService implements OnModuleInit {
-  private bot: Telegraf;
+  private bot!: Telegraf;
 
   constructor(
     @Inject(TELEGRAF_BOT_NAME)
@@ -78,7 +78,7 @@ export class ArcheologyService implements OnModuleInit {
 
   async play(ctx: Context) {
     this.gamesEngineService.play({
-      chatId: ctx.chat.id,
+      chatId: ctx.chat?.id as number,
       cooldownText: 'Полируем лопаты...',
       getFirstMessage: (place: string) =>
         `Вы начали раскопки ${place} и усиленно роете лопатами, экскаватором... Вам кажется что ваш совочек ударился обо что-то твердое. Может это клад?!`,
@@ -102,7 +102,7 @@ export class ArcheologyService implements OnModuleInit {
 
   async scores(ctx: Context) {
     this.gamesEngineService.getResult({
-      chatId: ctx.chat.id,
+      chatId: ctx.chat?.id as number,
       gameType: Games.Archeology,
       getTopResultText: (username: string, item: string, weight: number) =>
         `Игрок ${username} вырыл ${item}. Возраст артефакта ${weight} лет`,

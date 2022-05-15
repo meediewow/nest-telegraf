@@ -8,7 +8,7 @@ import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 import { ModuleRef } from '@nestjs/core';
 
 export class ScoresService {
-  private bot: Telegraf;
+  private bot!: Telegraf;
 
   constructor(
     @Inject(TELEGRAF_BOT_NAME)
@@ -22,7 +22,7 @@ export class ScoresService {
 
   async getScores(ctx: Context) {
     const games = await this.gamesRepository.find({
-      where: { chatId: ctx.message.chat.id },
+      where: { chatId: ctx.message?.chat.id },
     });
     const reply = (message: string) => {
       return ctx.reply(message, { parse_mode: 'Markdown' });

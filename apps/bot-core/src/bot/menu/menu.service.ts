@@ -5,7 +5,7 @@ import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 
 @Injectable()
 export class MenuService implements OnModuleInit {
-  private bot: Telegraf;
+  private bot!: Telegraf;
 
   constructor(
     @Inject(TELEGRAF_BOT_NAME)
@@ -23,6 +23,7 @@ export class MenuService implements OnModuleInit {
     ctx.reply(
       'Доступные функции: ',
       Markup.keyboard([
+        [Markup.button.text('/karma')],
         [Markup.button.text('/hunt'), Markup.button.text('/hunt_scores')],
         [Markup.button.text('/fish'), Markup.button.text('/fish_scores')],
         [Markup.button.text('/dig'), Markup.button.text('/dig_scores')],

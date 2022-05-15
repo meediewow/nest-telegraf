@@ -40,13 +40,13 @@ const ACTION_PREFIX = 'captcha';
 
 @Injectable()
 export class EventsService implements OnModuleInit {
-  private bot: Telegraf;
+  private bot!: Telegraf;
   @Client(captchaServiceOptions)
-  private client: ClientGrpc;
+  private client!: ClientGrpc;
 
   private readonly logger = new Logger(EventsService.name);
 
-  private captchaService: CaptchaServiceClient;
+  private captchaService!: CaptchaServiceClient;
   private waitCaptcha: Map<number, ICaptchaPayload[]> = new Map();
   private actionsStore: ActionStore;
 
@@ -72,14 +72,17 @@ export class EventsService implements OnModuleInit {
   }
 
   async validateCaptcha(ctx: Context) {
-    const chatId = ctx.chat.id;
+    const chatId = ctx.chat?.id;
+    if (!chatId) {
+      return;
+    }
     if (ctx.callbackQuery) {
       const triggerUserId = ctx.callbackQuery.from.id;
       const userChoice = this.actionsStore.get<ICallbackData>(
-        ctx.callbackQuery.data,
+        ctx.callbackQuery.data as string,
       );
       const userId = Number(userChoice.userId);
-      const channelWaitCaptcha = this.waitCaptcha.get(chatId);
+      const channelWaitCaptcha = this.waitCaptcha.get(chatId) || [];
       const userCaptcha = channelWaitCaptcha?.find(
         (captcha) => captcha.userId === userId,
       );
@@ -103,12 +106,13 @@ export class EventsService implements OnModuleInit {
 
       try {
         if (
-          isTriggeredAdmin ||
-          (userCaptcha.triesLeft > 0 &&
-            userChoice.answer === userCaptcha.answer)
+          (isTriggeredAdmin && userCaptcha) ||
+          (userCaptcha &&
+            userCaptcha?.triesLeft > 0 &&
+            userChoice.answer === userCaptcha?.answer)
         ) {
-          userCaptcha.enterMessageIds.forEach((msg) => {
-            this.bot.telegram.deleteMessage(ctx.chat.id, msg);
+          userCaptcha?.enterMessageIds.forEach((msg) => {
+            this.bot.telegram.deleteMessage(chatId, msg);
           });
           this.waitCaptcha.set(
             chatId,
@@ -125,35 +129,37 @@ export class EventsService implements OnModuleInit {
           });
           return;
         } else {
-          const triesLeft = userCaptcha.triesLeft - 1;
-          if (triesLeft === 0) {
-            this.waitCaptcha.set(
-              chatId,
-              channelWaitCaptcha.filter((i) => i.chatId !== chatId),
-            );
-            this.waitCaptcha.delete(userId);
-            try {
-              userCaptcha.enterMessageIds.forEach((msg) => {
-                ctx.deleteMessage(msg);
-              });
-              clearTimeout(userCaptcha.banTimer);
-              await ctx.answerCbQuery(
-                `Ты не прошел капчу, время бана: ${BAN_MINUTES} минут`,
-                {
-                  show_alert: true,
-                },
+          if (userCaptcha) {
+            const triesLeft = userCaptcha.triesLeft - 1;
+            if (triesLeft === 0) {
+              this.waitCaptcha.set(
+                chatId,
+                channelWaitCaptcha.filter((i) => i.chatId !== chatId),
               );
-              await this.banUser(userId, userCaptcha.chatId);
-            } catch (err) {
-              Logger.error(err.message);
-              ctx.answerCbQuery();
+              this.waitCaptcha.delete(userId);
+              try {
+                userCaptcha.enterMessageIds.forEach((msg) => {
+                  ctx.deleteMessage(msg);
+                });
+                clearTimeout(userCaptcha.banTimer);
+                await ctx.answerCbQuery(
+                  `Ты не прошел капчу, время бана: ${BAN_MINUTES} минут`,
+                  {
+                    show_alert: true,
+                  },
+                );
+                await this.banUser(userId, userCaptcha.chatId);
+              } catch (err: any) {
+                Logger.error(err.message);
+                ctx.answerCbQuery();
+              }
+              return;
+            } else {
+              const errorText = `${
+                ERROR_MESSAGES[getRandomInt(0, ERROR_MESSAGES.length - 1)]
+              } Осталось попыток: ${triesLeft}`;
+              this.sendCaptcha(ctx, triesLeft, userId, errorText);
             }
-            return;
-          } else {
-            const errorText = `${
-              ERROR_MESSAGES[getRandomInt(0, ERROR_MESSAGES.length - 1)]
-            } Осталось попыток: ${triesLeft}`;
-            this.sendCaptcha(ctx, triesLeft, userId, errorText);
           }
         }
       } catch (e) {
@@ -181,13 +187,16 @@ export class EventsService implements OnModuleInit {
   async sendCaptcha(
     ctx: Context,
     triesLeft = CAPTCHA_TRIES,
-    userId = ctx.from.id,
+    userId = ctx.from?.id,
     imageText?: string,
   ) {
     const captcha = await firstValueFrom(this.captchaService.getCaptcha({}));
-    const chatId = ctx.chat.id || ctx.chat.id;
+    const chatId = ctx.chat?.id;
+    if (!chatId || !userId) {
+      return;
+    }
     const defaultText = `Велкам, ${getUserMention(
-      ctx.from || ctx.callbackQuery.from,
+      ctx.from || ctx.callbackQuery?.from,
     )}! Пройди капчу, иначе мы забаним, потому что можем 😁`;
     ctx
       .replyWithPhoto(
@@ -257,7 +266,10 @@ export class EventsService implements OnModuleInit {
               triesLeft,
               banTimer,
               chatId,
-              enterMessageIds: [ctx.message.message_id, msg.message_id],
+              enterMessageIds: [
+                ctx.message?.message_id as number,
+                msg.message_id,
+              ],
             },
           ]);
         }

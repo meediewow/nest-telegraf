@@ -79,7 +79,7 @@ export class GamesEngineService {
         isReady: false,
       });
       setTimeout(async () => {
-        await this.gamesRepository.update(gameStore.id, {
+        await this.gamesRepository.update((gameStore as Game).id, {
           isReady: true,
         });
       }, PAUSE_BEFORE_START * 1000);
@@ -166,11 +166,11 @@ export class GamesEngineService {
     const userResult = gameStore.results.find(
       (i) => i.username === currentUser,
     );
-    if (gameStore.top) {
+    if (gameStore && gameStore.top) {
       await config.onMessage(config.resultTitle);
       await config.onMessage(
         config.getTopResultText(
-          gameStore.top.username,
+          gameStore.top.username as string,
           gameStore.top.item,
           gameStore.top.weight,
         ),

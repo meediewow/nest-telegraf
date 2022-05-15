@@ -1,7 +1,7 @@
-import { ClientOptions, Transport } from '@nestjs/microservices';
+import { Transport } from '@nestjs/microservices';
 import { resolve } from 'path';
 
-export const captchaServiceOptions: ClientOptions = {
+export const captchaServiceOptions = {
   transport: Transport.GRPC,
   options: {
     package: 'captcha',

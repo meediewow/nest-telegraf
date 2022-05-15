@@ -15,6 +15,7 @@ const envModule = ConfigModule.forRoot({
     SentryModule.forRoot({
       dsn: process.env.SENTRY_DSN,
       tracesSampleRate: 1.0,
+      environment: process.env.APP_ENV,
     }),
     MongoDBModule,
     ScheduleModule.forRoot(),

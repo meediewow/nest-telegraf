@@ -4,6 +4,7 @@ import { TelegrafCoreModule } from './core/core.module';
 import { CaptchaModule } from './captcha/captcha.module';
 import { GamesModule } from './games/games.module';
 import { MenuModule } from './menu/menu.module';
+import { KarmaModule } from './karma/karma.module';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { MenuModule } from './menu/menu.module';
         return new Promise((resolve) => {
           setTimeout(() => {
             resolve({
-              token: process.env.BOT_TOKEN,
+              token: process.env.BOT_TOKEN as string,
               // launchOptions: {
               //   webhook: {
               //     domain: 'https://481c-93-125-10-95.eu.ngrok.io',
@@ -28,6 +29,7 @@ import { MenuModule } from './menu/menu.module';
     MenuModule,
     CaptchaModule,
     GamesModule,
+    KarmaModule,
   ],
 })
 export class BotModule {}

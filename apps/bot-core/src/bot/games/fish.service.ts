@@ -72,7 +72,7 @@ const ITEMS = [
 ];
 
 export class FishService implements OnModuleInit {
-  private bot: Telegraf;
+  private bot!: Telegraf;
 
   constructor(
     @Inject(TELEGRAF_BOT_NAME)
@@ -86,7 +86,7 @@ export class FishService implements OnModuleInit {
 
   async play(ctx: Context) {
     this.gamesEngineService.play({
-      chatId: ctx.chat.id,
+      chatId: ctx.chat?.id as number,
       cooldownText: 'Натягиваем леску...',
       getFirstMessage: (place: string) =>
         `Вы забрасываете бамбуковую удочку в ${place}. Вы чувствуете поклевку и начинаете быстро тащить что-то из воды`,
@@ -110,7 +110,7 @@ export class FishService implements OnModuleInit {
 
   async scores(ctx: Context) {
     this.gamesEngineService.getResult({
-      chatId: ctx.chat.id,
+      chatId: ctx.chat?.id as number,
       gameType: Games.Fish,
       getTopResultText: (username: string, item: string, weight: number) =>
         `Игрок ${username} выловил ${item}. Вес: ${weight} кг`,
