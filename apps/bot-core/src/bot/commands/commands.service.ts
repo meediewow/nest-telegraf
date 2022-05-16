@@ -6,7 +6,6 @@ import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 @Injectable()
 export class CommandsService implements OnModuleInit {
   private bot!: Telegraf;
-  private arr: Array<null | { foo: string } | undefined> = [];
 
   constructor(
     @Inject(TELEGRAF_BOT_NAME)

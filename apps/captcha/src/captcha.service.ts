@@ -1,13 +1,14 @@
 import { Captcha } from '@app/protobufs';
 import { Injectable } from '@nestjs/common';
 import * as canvas from 'canvas';
+import {
+  FONTS,
+  HEIGHT,
+  LINES_COUNT,
+  OPERATIONS,
+  WIDTH,
+} from './captcha.constants';
 import { getRandomInt, parseExpression } from './utils/number.utils';
-
-const OPERATIONS: Array<'+' | '-'> = ['+', '-'];
-const WIDTH = 200;
-const HEIGHT = 70;
-const LINES_COUNT = 20;
-const FONTS = ['Georgia', 'Helvetica Neue', 'Helvetica', 'Arial'];
 
 @Injectable()
 export class CaptchaService {

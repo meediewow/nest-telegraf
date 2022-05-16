@@ -11,32 +11,14 @@ import { captchaServiceOptions } from '../options/grpc.options';
 import { getUserMention } from '../utils/user.utils';
 import { getRandomInt } from '../utils/number.utils';
 import { ActionStore } from '../utils/actions-store.utils';
-
-interface ICaptchaPayload {
-  answer: string;
-  triesLeft: number;
-  userId: number;
-  chatId: number;
-  banTimer: NodeJS.Timeout;
-  enterMessageIds: number[];
-}
-
-interface ICallbackData {
-  answer: string;
-  userId: number;
-}
-
-const CAPTCHA_TRIES = 3;
-
-const ERROR_MESSAGES = [
-  'А ты точно не робот?',
-  'Неее, дружище, что-то не так.',
-  'Пересчитай, пожалуйста.',
-];
-
-const SECONDS_BEFORE_BAN = 270;
-const BAN_MINUTES = 30;
-const ACTION_PREFIX = 'captcha';
+import {
+  ACTION_PREFIX,
+  BAN_MINUTES,
+  CAPTCHA_TRIES,
+  ERROR_MESSAGES,
+  SECONDS_BEFORE_BAN,
+} from './captcha.constants';
+import { ICallbackData, ICaptchaPayload } from './captcha.types';
 
 @Injectable()
 export class EventsService implements OnModuleInit {

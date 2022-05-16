@@ -14,15 +14,16 @@ import { User, Message } from 'telegraf/typings/core/types/typegram';
 import { getUserMention } from '../utils/user.utils';
 import * as moment from 'moment';
 import { generateId } from '../utils/number.utils';
-
-const INIT_KARMA = 100;
-const IS_RESTRICTIONS_ENABLED = true;
-const RESTRICTION_DAYS = 7;
-const LOWER_LEVEL = -50;
-const HEARS_REGEXP = /^(\-|\+)/;
-const DELAY = 5; //sec
-const TOP_LENGTH = 10;
-const TIME_TO_DELETE = 5 * 60; //sec
+import {
+  DELAY,
+  HEARS_REGEXP,
+  INIT_KARMA,
+  IS_RESTRICTIONS_ENABLED,
+  LOWER_LEVEL,
+  RESTRICTION_DAYS,
+  TIME_TO_DELETE,
+  TOP_LENGTH,
+} from './karma.constants';
 
 @Injectable()
 export class KarmaService implements OnModuleInit {
@@ -44,11 +45,11 @@ export class KarmaService implements OnModuleInit {
     private readonly chatRepository: MongoRepository<Chat>,
   ) {
     this.menu = this.menu.bind(this);
-    this.init = this.init.bind(this);
+    this.enable = this.enable.bind(this);
     this.myKarma = this.myKarma.bind(this);
     this.topKarma = this.topKarma.bind(this);
     this.change = this.change.bind(this);
-    this.off = this.off.bind(this);
+    this.disable = this.disable.bind(this);
   }
 
   private async getUserKarma(
@@ -63,7 +64,7 @@ export class KarmaService implements OnModuleInit {
       },
     });
     if (!userKarma) {
-      return (await this.initUserKarma(chatId, user))?.value as number;
+      return (await this.initUserKarma(chatId, user))?.value;
     }
     return userKarma.value;
   }
@@ -138,7 +139,7 @@ export class KarmaService implements OnModuleInit {
     )?.karma?.isEnabled;
   }
 
-  async init(ctx: Context) {
+  async enable(ctx: Context) {
     const update = ctx.callbackQuery;
     const chatId = ctx.chat?.id;
     if (!chatId) {
@@ -193,7 +194,7 @@ export class KarmaService implements OnModuleInit {
     }
   }
 
-  async off(ctx: Context) {
+  async disable(ctx: Context) {
     const chatId = ctx.chat?.id;
     if (!chatId) {
       return;
@@ -448,10 +449,10 @@ export class KarmaService implements OnModuleInit {
 
   listenEvents() {
     this.bot.command('karma', this.menu);
-    this.bot.action(KarmaActionsEnum.ON, this.init);
+    this.bot.action(KarmaActionsEnum.ON, this.enable);
     this.bot.action(KarmaActionsEnum.MY, this.myKarma);
     this.bot.action(KarmaActionsEnum.TOP, this.topKarma);
-    this.bot.action(KarmaActionsEnum.OFF, this.off);
+    this.bot.action(KarmaActionsEnum.OFF, this.disable);
     this.bot.hears(HEARS_REGEXP, this.change);
   }
 
