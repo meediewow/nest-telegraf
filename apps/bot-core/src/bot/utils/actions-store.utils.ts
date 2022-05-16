@@ -15,7 +15,7 @@ export class ActionStore {
     return `${this.prefix}_${id}`;
   }
 
-  public get<T>(key: string): T {
+  public get<T>(key: string): T | undefined {
     return this.store.get(key.replace(`${this.prefix}_`, '')) as T;
   }
 

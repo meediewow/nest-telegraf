@@ -63,7 +63,7 @@ export class EventsService implements OnModuleInit {
       const userChoice = this.actionsStore.get<ICallbackData>(
         ctx.callbackQuery.data as string,
       );
-      const userId = Number(userChoice.userId);
+      const userId = Number(userChoice?.userId);
       const channelWaitCaptcha = this.waitCaptcha.get(chatId) || [];
       const userCaptcha = channelWaitCaptcha?.find(
         (captcha) => captcha.userId === userId,
@@ -79,7 +79,7 @@ export class EventsService implements OnModuleInit {
         isTriggeredAdmin = false;
       }
 
-      if (userId !== triggerUserId && !isTriggeredAdmin) {
+      if ((userId !== triggerUserId && !isTriggeredAdmin) || !userChoice) {
         ctx.answerCbQuery('Капча предоставлена для другого пользователя', {
           show_alert: true,
         });
@@ -91,7 +91,7 @@ export class EventsService implements OnModuleInit {
           (isTriggeredAdmin && userCaptcha) ||
           (userCaptcha &&
             userCaptcha?.triesLeft > 0 &&
-            userChoice.answer === userCaptcha?.answer)
+            userChoice?.answer === userCaptcha?.answer)
         ) {
           userCaptcha?.enterMessageIds.forEach((msg) => {
             this.bot.telegram.deleteMessage(chatId, msg);
@@ -116,9 +116,8 @@ export class EventsService implements OnModuleInit {
             if (triesLeft === 0) {
               this.waitCaptcha.set(
                 chatId,
-                channelWaitCaptcha.filter((i) => i.chatId !== chatId),
+                channelWaitCaptcha.filter((i) => i.userId !== userId),
               );
-              this.waitCaptcha.delete(userId);
               try {
                 userCaptcha.enterMessageIds.forEach((msg) => {
                   ctx.deleteMessage(msg);
@@ -239,7 +238,19 @@ export class EventsService implements OnModuleInit {
 
           const banTimer = setTimeout(() => {
             this.banUser(userId, chatId);
+            const channelWaitCaptcha = this.waitCaptcha.get(chatId) || [];
+            const userCaptcha = channelWaitCaptcha?.find(
+              (captcha) => captcha.userId === userId,
+            );
+            userCaptcha?.enterMessageIds.forEach((msg) => {
+              ctx.deleteMessage(msg);
+            });
+            this.waitCaptcha.set(
+              chatId,
+              channelWaitCaptcha.filter((i) => i.userId !== userId),
+            );
           }, SECONDS_BEFORE_BAN * 1000);
+
           this.waitCaptcha.set(chatId, [
             ...channelCaptcha,
             {
