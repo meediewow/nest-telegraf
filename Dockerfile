@@ -17,9 +17,10 @@ RUN apk add --no-cache \
 
 WORKDIR /home/node/app
 
-COPY package*.json ./
+COPY package*.json .
+COPY patches ./patches
 
-RUN npm install && npm cache clean --force
+RUN npm install --unsafe-perm && npm cache clean --force
 
 ARG SERVICE_NAME
 
