@@ -19,7 +19,7 @@ export async function createBotFactory(
         hookPath: '/secret',
       },
     });
-  } else if (ClusterService.processCount === 1) {
+  } else {
     await bot.startPolling();
   }
 

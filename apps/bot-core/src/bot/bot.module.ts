@@ -14,12 +14,6 @@ import { KarmaModule } from './karma/karma.module';
           setTimeout(() => {
             resolve({
               token: process.env.BOT_TOKEN as string,
-              // launchOptions: {
-              //   webhook: {
-              //     domain: 'https://481c-93-125-10-95.eu.ngrok.io',
-              //     hookPath: '/secret-path',
-              //   },
-              // },
             });
           }, 100);
         });
