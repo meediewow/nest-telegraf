@@ -2,6 +2,7 @@ import { Inject, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { Context, Telegraf } from 'telegraf';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
+import { removeMessageTimeout } from '../utils/message.util';
 import { getUserMention } from '../utils/user.util';
 import { GamesEngineService } from './engine/games-engine.service';
 import { Games } from './types/games.enums';
@@ -103,7 +104,9 @@ export class FishService implements OnModuleInit {
       places: PLACES,
       maxWeight: MAX_WEIGHT,
       onMessage: (message: string) =>
-        ctx.reply(message, { parse_mode: 'Markdown' }),
+        ctx
+          .reply(message, { parse_mode: 'Markdown' })
+          .then((msg) => removeMessageTimeout(ctx, msg)),
       username: getUserMention(ctx.from),
     });
   }
@@ -120,7 +123,9 @@ export class FishService implements OnModuleInit {
         `Твой лучший улов: ${item}, весом ${weight} кило!`,
       username: getUserMention(ctx.from),
       onMessage: (message: string) =>
-        ctx.reply(message, { parse_mode: 'Markdown' }),
+        ctx
+          .reply(message, { parse_mode: 'Markdown' })
+          .then((msg) => removeMessageTimeout(ctx, msg)),
     });
   }
 

@@ -24,6 +24,7 @@ import {
   TIME_TO_DELETE,
   TOP_LENGTH,
 } from './karma.constants';
+import { removeMessageTimeout } from '../utils/message.util';
 
 @Injectable()
 export class KarmaService implements OnModuleInit {
@@ -332,11 +333,7 @@ export class KarmaService implements OnModuleInit {
               )})`,
               { parse_mode: 'Markdown' },
             )
-            .then((msg) => {
-              setTimeout(() => {
-                this.bot.telegram.deleteMessage(chatId, msg.message_id);
-              }, TIME_TO_DELETE * 1000);
-            });
+            .then((msg) => removeMessageTimeout(ctx, msg, TIME_TO_DELETE));
           break;
         }
         case '-': {
@@ -352,23 +349,21 @@ export class KarmaService implements OnModuleInit {
               )})`,
               { parse_mode: 'Markdown' },
             )
-            .then((msg) => {
-              setTimeout(() => {
-                this.bot.telegram.deleteMessage(chatId, msg.message_id);
-              }, TIME_TO_DELETE * 1000);
-            });
+            .then((msg) => removeMessageTimeout(ctx, msg, TIME_TO_DELETE));
           if (updatedKarma <= LOWER_LEVEL) {
             if (chat?.karma.isRestrictionsEnabled) {
               const restrictionDays =
                 (userKarma?.restrictions.sort(
                   (a, b) => b.periodDays - a.periodDays,
                 )[0].periodDays || 0) + RESTRICTION_DAYS;
-              ctx.reply(
-                `${getUserMention(
-                  targetUser,
-                )}, Ваша карма упала ниже ${LOWER_LEVEL}. Возможность отправки сообщений ограничена на ${restrictionDays} дней.`,
-                { parse_mode: 'Markdown' },
-              );
+              ctx
+                .reply(
+                  `${getUserMention(
+                    targetUser,
+                  )}, Ваша карма упала ниже ${LOWER_LEVEL}. Возможность отправки сообщений ограничена на ${restrictionDays} дней.`,
+                  { parse_mode: 'Markdown' },
+                )
+                .then((msg) => removeMessageTimeout(ctx, msg));
               const untilData = moment().add(restrictionDays, 'days').unix();
               this.bot.telegram.restrictChatMember(chatId, targetUser?.id, {
                 permissions: {

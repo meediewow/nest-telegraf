@@ -6,6 +6,7 @@ import { Games } from './types/games.enums';
 import { Inject } from '@nestjs/common';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 import { ModuleRef } from '@nestjs/core';
+import { removeMessageTimeout } from '../utils/message.util';
 
 export class ScoresService {
   private bot!: Telegraf;
@@ -24,8 +25,11 @@ export class ScoresService {
     const games = await this.gamesRepository.find({
       where: { chatId: ctx.message?.chat.id },
     });
+
     const reply = (message: string) => {
-      return ctx.reply(message, { parse_mode: 'Markdown' });
+      return ctx
+        .reply(message, { parse_mode: 'Markdown' })
+        .then((msg) => removeMessageTimeout(ctx, msg));
     };
     let result: string[] = [];
     games.forEach(async (i) => {

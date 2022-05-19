@@ -5,6 +5,7 @@ import { Games } from './types/games.enums';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 import { ModuleRef } from '@nestjs/core';
 import { getUserMention } from '../utils/user.util';
+import { removeMessageTimeout } from '../utils/message.util';
 
 const MAX_WEIGHT = 600;
 
@@ -79,7 +80,9 @@ export class HuntService implements OnModuleInit {
       places: PLACES,
       maxWeight: MAX_WEIGHT,
       onMessage: (message: string) =>
-        ctx.reply(message, { parse_mode: 'Markdown' }),
+        ctx
+          .reply(message, { parse_mode: 'Markdown' })
+          .then((msg) => removeMessageTimeout(ctx, msg)),
       username: getUserMention(ctx.from),
     });
   }
@@ -96,7 +99,9 @@ export class HuntService implements OnModuleInit {
         `Твоя лучшая добыча: ${item}, весом ${weight} кило!`,
       username: getUserMention(ctx.from),
       onMessage: (message: string) =>
-        ctx.reply(message, { parse_mode: 'Markdown' }),
+        ctx
+          .reply(message, { parse_mode: 'Markdown' })
+          .then((msg) => removeMessageTimeout(ctx, msg)),
     });
   }
 
