@@ -1,4 +1,4 @@
-import { generateId } from './number.utils';
+import { generateId } from './number.util';
 
 export class ActionStore {
   private prefix: string;

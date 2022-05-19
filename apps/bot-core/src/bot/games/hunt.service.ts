@@ -4,7 +4,7 @@ import { GamesEngineService } from './engine/games-engine.service';
 import { Games } from './types/games.enums';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 import { ModuleRef } from '@nestjs/core';
-import { getUserMention } from '../utils/user.utils';
+import { getUserMention } from '../utils/user.util';
 
 const MAX_WEIGHT = 600;
 

@@ -3,7 +3,7 @@ import { MongoRepository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Game } from 'src/mongodb/entity/game.entity';
 import { Games } from '../types/games.enums';
-import { getRandomInt } from 'src/bot/utils/number.utils';
+import { getRandomInt } from 'src/bot/utils/number.util';
 import { Message } from 'telegraf/typings/core/types/typegram';
 
 const PAUSE_BEFORE_START = 10; //sec

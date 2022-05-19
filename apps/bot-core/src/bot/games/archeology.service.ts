@@ -2,7 +2,7 @@ import { Inject, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { Context, Telegraf } from 'telegraf';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
-import { getUserMention } from '../utils/user.utils';
+import { getUserMention } from '../utils/user.util';
 import { GamesEngineService } from './engine/games-engine.service';
 import { Games } from './types/games.enums';
 

@@ -1,0 +1,244 @@
+diff --git a/node_modules/telegraf/lib/telegraf.js b/node_modules/telegraf/lib/telegraf.js
+index e0f35f4..1c37b47 100644
+--- a/node_modules/telegraf/lib/telegraf.js
++++ b/node_modules/telegraf/lib/telegraf.js
+@@ -64,11 +64,14 @@ class Telegraf extends composer_1.Composer {
+     webhookCallback(path = '/') {
+         return (0, webhook_1.default)(path, (update, res) => this.handleUpdate(update, res));
+     }
+-    startPolling(allowedUpdates = []) {
+-        this.polling = new polling_1.Polling(this.telegram, allowedUpdates);
+-        this.polling.loop(async (updates) => {
+-            await this.handleUpdates(updates);
+-        });
++    async startPolling(allowedUpdates = []) {
++        if (!this.polling) {
++            await this.telegram.deleteWebhook();
++            this.polling = new polling_1.Polling(this.telegram, allowedUpdates);
++            this.polling.loop(async (updates) => {
++                await this.handleUpdates(updates);
++            });
++        }
+     }
+     startWebhook(hookPath, tlsOptions, port, host, cb) {
+         const webhookCb = this.webhookCallback(hookPath);
+@@ -99,36 +102,30 @@ class Telegraf extends composer_1.Composer {
+         debug('Connecting to Telegram');
+         (_a = this.botInfo) !== null && _a !== void 0 ? _a : (this.botInfo = await this.telegram.getMe());
+         debug(`Launching @${this.botInfo.username}`);
+-        if (config.webhook === undefined) {
+-            await this.telegram.deleteWebhook({
+-                drop_pending_updates: config.dropPendingUpdates,
+-            });
+-            this.startPolling(config.allowedUpdates);
+-            debug('Bot started with long polling');
+-            return;
+-        }
+-        if (typeof config.webhook.domain !== 'string' &&
+-            typeof config.webhook.hookPath !== 'string') {
+-            throw new Error('Webhook domain or webhook path is required');
+-        }
+-        let domain = (_b = config.webhook.domain) !== null && _b !== void 0 ? _b : '';
+-        if (domain.startsWith('https://') || domain.startsWith('http://')) {
+-            domain = new url_1.URL(domain).host;
+-        }
+-        const hookPath = (_c = config.webhook.hookPath) !== null && _c !== void 0 ? _c : `/telegraf/${this.secretPathComponent()}`;
+-        const { port, host, tlsOptions, cb } = config.webhook;
+-        this.startWebhook(hookPath, tlsOptions, port, host, cb);
+-        if (!domain) {
+-            debug('Bot started with webhook');
+-            return;
++        if (config.webhook !== undefined) {
++            if (typeof config.webhook.domain !== 'string' &&
++                typeof config.webhook.hookPath !== 'string') {
++                throw new Error('Webhook domain or webhook path is required');
++            }
++            let domain = (_b = config.webhook.domain) !== null && _b !== void 0 ? _b : '';
++            if (domain.startsWith('https://') || domain.startsWith('http://')) {
++                domain = new url_1.URL(domain).host;
++            }
++            const hookPath = (_c = config.webhook.hookPath) !== null && _c !== void 0 ? _c : `/telegraf/${this.secretPathComponent()}`;
++            const { port, host, tlsOptions, cb } = config.webhook;
++            this.startWebhook(hookPath, tlsOptions, port, host, cb);
++            if (!domain) {
++                debug('Bot started with webhook');
++                return;
++            }
++            // await this.telegram.setWebhook(`https://${domain}${hookPath}`, {
++            //     drop_pending_updates: config.dropPendingUpdates,
++            //     allowed_updates: config.allowedUpdates,
++            //     ip_address: config.webhook.ipAddress,
++            //     max_connections: config.webhook.maxConnections,
++            // });
++            debug(`Bot started with webhook @ https://${domain}`);
+         }
+-        await this.telegram.setWebhook(`https://${domain}${hookPath}`, {
+-            drop_pending_updates: config.dropPendingUpdates,
+-            allowed_updates: config.allowedUpdates,
+-            ip_address: config.webhook.ipAddress,
+-            max_connections: config.webhook.maxConnections,
+-        });
+-        debug(`Bot started with webhook @ https://${domain}`);
+     }
+     stop(reason = 'unspecified') {
+         var _a, _b;
+@@ -147,9 +144,9 @@ class Telegraf extends composer_1.Composer {
+         return Promise.all(updates.map((update) => this.handleUpdate(update)));
+     }
+     async handleUpdate(update, webhookResponse) {
+-        var _a, _b;
+-        (_a = this.botInfo) !== null && _a !== void 0 ? _a : (this.botInfo = (debug('Update %d is waiting for `botInfo` to be initialized', update.update_id),
+-            await ((_b = this.botInfoCall) !== null && _b !== void 0 ? _b : (this.botInfoCall = this.telegram.getMe()))));
++        // var _a, _b;
++        // (_a = this.botInfo) !== null && _a !== void 0 ? _a : (this.botInfo = (debug('Update %d is waiting for `botInfo` to be initialized', update.update_id),
++        //     await ((_b = this.botInfoCall) !== null && _b !== void 0 ? _b : (this.botInfoCall = this.telegram.getMe()))));
+         debug('Processing update', update.update_id);
+         const tg = new telegram_1.default(this.token, this.telegram.options, webhookResponse);
+         const TelegrafContext = this.options.contextType;
+diff --git a/node_modules/telegraf/src/context.ts b/node_modules/telegraf/src/context.ts
+index e16f69d..3918fa6 100644
+--- a/node_modules/telegraf/src/context.ts
++++ b/node_modules/telegraf/src/context.ts
+@@ -17,7 +17,7 @@ export class Context<U extends Deunionize<tg.Update> = tg.Update> {
+   constructor(
+     readonly update: U,
+     readonly tg: Telegram,
+-    readonly botInfo: tg.UserFromGetMe
++    readonly botInfo: tg.UserFromGetMe | undefined
+   ) {}
+ 
+   get updateType() {
+diff --git a/node_modules/telegraf/src/telegraf.ts b/node_modules/telegraf/src/telegraf.ts
+index 9da984f..42fb9e9 100644
+--- a/node_modules/telegraf/src/telegraf.ts
++++ b/node_modules/telegraf/src/telegraf.ts
+@@ -39,6 +39,9 @@ export namespace Telegraf {
+   }
+ 
+   export interface LaunchOptions {
++    /** Start with pooling */
++    startPolling?: boolean
++
+     dropPendingUpdates?: boolean
+     /** List the types of updates you want your bot to receive */
+     allowedUpdates?: tt.UpdateType[]
+@@ -90,6 +93,7 @@ export class Telegraf<C extends Context = Context> extends Composer<C> {
+ 
+   constructor(token: string, options?: Partial<Telegraf.Options<C>>) {
+     super()
++
+     // @ts-expect-error Trust me, TS
+     this.options = {
+       ...DEFAULT_OPTIONS,
+@@ -128,7 +132,7 @@ export class Telegraf<C extends Context = Context> extends Composer<C> {
+     )
+   }
+ 
+-  private startPolling(allowedUpdates: tt.UpdateType[] = []) {
++  async startPolling(allowedUpdates: tt.UpdateType[] = []) {
+     this.polling = new Polling(this.telegram, allowedUpdates)
+     this.polling.loop(async (updates) => {
+       await this.handleUpdates(updates)
+@@ -172,39 +176,41 @@ export class Telegraf<C extends Context = Context> extends Composer<C> {
+     debug('Connecting to Telegram')
+     this.botInfo ??= await this.telegram.getMe()
+     debug(`Launching @${this.botInfo.username}`)
+-    if (config.webhook === undefined) {
++    if (config.webhook === undefined && config.startPolling) {
+       await this.telegram.deleteWebhook({
+         drop_pending_updates: config.dropPendingUpdates,
+       })
+       this.startPolling(config.allowedUpdates)
+       debug('Bot started with long polling')
+       return
++    } else {
++      if (
++        typeof config.webhook.domain !== 'string' &&
++        typeof config.webhook.hookPath !== 'string'
++      ) {
++        throw new Error('Webhook domain or webhook path is required')
++      }
++      let domain = config.webhook.domain ?? ''
++      if (domain.startsWith('https://') || domain.startsWith('http://')) {
++        domain = new URL(domain).host
++      }
++      const hookPath =
++        config.webhook.hookPath ?? `/telegraf/${this.secretPathComponent()}`
++      const { port, host, tlsOptions, cb } = config.webhook
++      this.startWebhook(hookPath, tlsOptions, port, host, cb)
++      if (!domain) {
++        debug('Bot started with webhook')
++        return
++      }
++      await this.telegram.setWebhook(`https://${domain}${hookPath}`, {
++        drop_pending_updates: config.dropPendingUpdates,
++        allowed_updates: config.allowedUpdates,
++        ip_address: config.webhook.ipAddress,
++        max_connections: config.webhook.maxConnections,
++      })
++      debug(`Bot started with webhook @ https://${domain}`)
+     }
+-    if (
+-      typeof config.webhook.domain !== 'string' &&
+-      typeof config.webhook.hookPath !== 'string'
+-    ) {
+-      throw new Error('Webhook domain or webhook path is required')
+-    }
+-    let domain = config.webhook.domain ?? ''
+-    if (domain.startsWith('https://') || domain.startsWith('http://')) {
+-      domain = new URL(domain).host
+-    }
+-    const hookPath =
+-      config.webhook.hookPath ?? `/telegraf/${this.secretPathComponent()}`
+-    const { port, host, tlsOptions, cb } = config.webhook
+-    this.startWebhook(hookPath, tlsOptions, port, host, cb)
+-    if (!domain) {
+-      debug('Bot started with webhook')
+-      return
+-    }
+-    await this.telegram.setWebhook(`https://${domain}${hookPath}`, {
+-      drop_pending_updates: config.dropPendingUpdates,
+-      allowed_updates: config.allowedUpdates,
+-      ip_address: config.webhook.ipAddress,
+-      max_connections: config.webhook.maxConnections,
+-    })
+-    debug(`Bot started with webhook @ https://${domain}`)
++    return
+   }
+ 
+   stop(reason = 'unspecified') {
+@@ -224,14 +230,14 @@ export class Telegraf<C extends Context = Context> extends Composer<C> {
+     return Promise.all(updates.map((update) => this.handleUpdate(update)))
+   }
+ 
+-  private botInfoCall?: Promise<tg.UserFromGetMe>
++  // private botInfoCall?: Promise<tg.UserFromGetMe>
+   async handleUpdate(update: tg.Update, webhookResponse?: http.ServerResponse) {
+-    this.botInfo ??=
+-      (debug(
+-        'Update %d is waiting for `botInfo` to be initialized',
+-        update.update_id
+-      ),
+-      await (this.botInfoCall ??= this.telegram.getMe()))
++    // this.botInfo ??=
++    //   (debug(
++    //     'Update %d is waiting for `botInfo` to be initialized',
++    //     update.update_id
++    //   ),
++    //   await (this.botInfoCall ??= this.telegram.getMe()))
+     debug('Processing update', update.update_id)
+     const tg = new Telegram(this.token, this.telegram.options, webhookResponse)
+     const TelegrafContext = this.options.contextType
+diff --git a/node_modules/telegraf/typings/telegraf.d.ts b/node_modules/telegraf/typings/telegraf.d.ts
+index 5a4d01b..44464e5 100644
+--- a/node_modules/telegraf/typings/telegraf.d.ts
++++ b/node_modules/telegraf/typings/telegraf.d.ts
+@@ -59,7 +59,7 @@ export declare class Telegraf<C extends Context = Context> extends Composer<C> {
+     webhookCallback(path?: string): (req: http.IncomingMessage & {
+         body?: tg.Update | undefined;
+     }, res: http.ServerResponse, next?: () => void) => Promise<void>;
+-    private startPolling;
++    startPolling(): Promise<void>;
+     private startWebhook;
+     secretPathComponent(): string;
+     /**

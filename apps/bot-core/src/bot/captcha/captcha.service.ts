@@ -2,15 +2,15 @@ import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { Client, ClientGrpc } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
-import * as moment from 'moment';
+import moment from 'moment';
 import { Context, Markup, Telegraf } from 'telegraf';
 import { Logger } from '@nestjs/common';
 import { CaptchaServiceClient } from '@app/protobufs';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 import { captchaServiceOptions } from '../options/grpc.options';
-import { getUserMention } from '../utils/user.utils';
-import { getRandomInt } from '../utils/number.utils';
-import { ActionStore } from '../utils/actions-store.utils';
+import { getUserMention } from '../utils/user.util';
+import { getRandomInt } from '../utils/number.util';
+import { ActionStore } from '../utils/actions-store.util';
 import {
   ACTION_PREFIX,
   BAN_MINUTES,
@@ -130,8 +130,8 @@ export class EventsService implements OnModuleInit {
                   },
                 );
                 await this.banUser(userId, userCaptcha.chatId);
-              } catch (err: any) {
-                Logger.error(err.message);
+              } catch (error: unknown) {
+                Logger.error((error as Error).message);
                 ctx.answerCbQuery();
               }
               return;

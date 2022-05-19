@@ -8,7 +8,7 @@ import {
   OPERATIONS,
   WIDTH,
 } from './captcha.constants';
-import { getRandomInt, parseExpression } from './utils/number.utils';
+import { getRandomInt, parseExpression } from './utils/number.util';
 
 @Injectable()
 export class CaptchaService {

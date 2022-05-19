@@ -11,9 +11,9 @@ import { Karma } from 'src/mongodb/entity/karma.entity';
 import { MongoRepository } from 'typeorm';
 import { Chat } from 'src/mongodb/entity/chat.entity';
 import { User, Message } from 'telegraf/typings/core/types/typegram';
-import { getUserMention } from '../utils/user.utils';
-import * as moment from 'moment';
-import { generateId } from '../utils/number.utils';
+import { getUserMention } from '../utils/user.util';
+import moment from 'moment';
+import { generateId } from '../utils/number.util';
 import {
   DELAY,
   HEARS_REGEXP,

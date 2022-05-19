@@ -13,6 +13,8 @@
     "incremental": true,
     "skipLibCheck": true,
     "strict": true,
+    "allowJs": true,
+    "esModuleInterop": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
