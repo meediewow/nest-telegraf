@@ -3,7 +3,7 @@ import { Context } from 'telegraf';
 import { Message } from 'telegraf/typings/core/types/typegram';
 import { Logger } from '@nestjs/common';
 
-const DELETE_MESSAGE_DELAY = 5; // sec
+const DELETE_MESSAGE_DELAY = 60; // sec
 
 export const removeMessageTimeout = async (
   ctx: Context,
