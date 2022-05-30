@@ -2,31 +2,31 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MongoRepository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { Game } from 'src/mongodb/entity/game.entity';
-import { Games } from '../types/games.enums';
 import { getRandomInt } from 'src/bot/utils/number.util';
-import { Message } from 'telegraf/typings/core/types/typegram';
+import { IUser } from 'src/types/telegram.type';
+import { Games } from '../types/games.enums';
 
-const PAUSE_BEFORE_START = 10; //sec
+// Seconds
+const PAUSE_BEFORE_START = 10;
 
 interface IBasic {
   gameType: Games;
   chatId: number;
-  onMessage: (message: string) => Promise<Message.TextMessage>;
-  username: string;
+  user: IUser;
 }
 
 interface IPlayMessages {
   cooldownText: string;
   getFirstMessage: (place: string) => string;
-  getSecondMessage: (item: string, username: string, weight: number) => string;
-  getFailText: (places: string, username: string) => string;
-  getWinText: (username: string) => string;
-  getLoseText: (username: string) => string;
+  getSecondMessage: (item: string, user: IUser, weight: number) => string;
+  getFailText: (places: string, user: IUser) => string;
+  getWinText: (user: IUser) => string;
+  getLoseText: (user: IUser) => string;
 }
 
 interface IResultMessages {
   resultTitle: string;
-  getTopResultText: (username: string, item: string, weight: number) => string;
+  getTopResultText: (user: IUser, item: string, weight: number) => string;
   notTopText: string;
   getUserResultText: (item: string, weight: number) => string;
 }
@@ -37,7 +37,7 @@ interface IPlay extends IBasic, IPlayMessages {
   items: string[];
 }
 
-interface IGetResult extends IBasic, IResultMessages {}
+interface IGetResult extends Omit<IBasic, 'onMessage'>, IResultMessages {}
 
 @Injectable()
 export class GamesEngineService {
@@ -46,143 +46,133 @@ export class GamesEngineService {
     private readonly gamesRepository: MongoRepository<Game>,
   ) {}
 
-  private getEntity(entities: string[]): string {
+  private static getEntity(entities: string[]): string {
     return entities[getRandomInt(0, entities.length - 1)];
   }
 
-  private getRandomWeight(maxWeight: number): number {
+  private static getRandomWeight(maxWeight: number): number {
     return Math.round(getRandomInt(0, maxWeight) * Math.random());
   }
 
-  public async play(config: IPlay) {
-    let gameStore = await this.gamesRepository.findOne({
+  private async getGame(gameType: Games, chatId: number) {
+    const game = await this.gamesRepository.findOne({
       where: {
-        game: config.gameType,
-        chatId: config.chatId,
+        game: gameType,
+        chatId,
       },
     });
-
-    if (!gameStore) {
-      gameStore = await this.gamesRepository.save({
-        game: config.gameType,
-        chatId: config.chatId,
+    if (!game) {
+      return this.gamesRepository.save({
+        game: gameType,
+        chatId,
         isReady: true,
         results: [],
       });
     }
+    return game;
+  }
 
-    if (!gameStore.isReady) {
-      await config.onMessage(config.cooldownText);
-      return;
-    } else {
-      await this.gamesRepository.update(gameStore.id, {
+  public async play(config: IPlay): Promise<string[]> {
+    let output: string[] = [];
+    const game = await this.getGame(config.gameType, config.chatId);
+
+    if (game.isReady) {
+      await this.gamesRepository.update(game.id, {
         isReady: false,
       });
+      // add start time
       setTimeout(async () => {
-        await this.gamesRepository.update((gameStore as Game).id, {
+        await this.gamesRepository.update((game as Game).id, {
           isReady: true,
         });
       }, PAUSE_BEFORE_START * 1000);
-    }
 
-    const currentResult = {
-      place: this.getEntity(config.places),
-      item: this.getEntity(config.items),
-      weight: this.getRandomWeight(config.maxWeight),
-      username: config.username,
-    };
+      const currentResult = {
+        place: GamesEngineService.getEntity(config.places),
+        item: GamesEngineService.getEntity(config.items),
+        weight: GamesEngineService.getRandomWeight(config.maxWeight),
+        user: config.user,
+      };
 
-    const isEmpty = getRandomInt(1, 3) === 1;
-    await config.onMessage(config.getFirstMessage(currentResult.place));
+      const isEmpty = getRandomInt(1, 3) === 1;
 
-    setTimeout(async () => {
-      if (isEmpty) {
-        await config.onMessage(
-          config.getFailText(currentResult.place, currentResult.username),
+      output = [...output, config.getFirstMessage(currentResult.place)];
+
+      if (!isEmpty) {
+        output = [
+          ...output,
+          config.getSecondMessage(
+            currentResult.item,
+            currentResult.user,
+            currentResult.weight,
+          ),
+        ];
+
+        const isWinner = game.top
+          ? game.top?.weight < currentResult.weight
+          : true;
+        const existedResult = game.results.find(
+          (i) => i.user?.id === currentResult.user.id,
         );
-        return;
-      }
-      await config.onMessage(
-        config.getSecondMessage(
-          currentResult.item,
-          currentResult.username,
-          currentResult.weight,
-        ),
-      );
-    }, 1000);
 
-    if (!isEmpty) {
-      const isWinner = gameStore.top
-        ? gameStore.top?.weight < currentResult.weight
-        : true;
-      const existedResult = gameStore.results.find(
-        (i) => i.username === currentResult.username,
-      );
-
-      if (!!existedResult && existedResult.weight < currentResult.weight) {
-        await this.gamesRepository.update(gameStore.id, {
-          results: gameStore.results.map((i) => {
-            if (i.username === currentResult.username) {
-              return currentResult;
-            } else {
+        if (existedResult && existedResult.weight < currentResult.weight) {
+          await this.gamesRepository.update(game.id, {
+            results: game.results.map((i) => {
+              if (i.user.id === currentResult.user.id) {
+                return currentResult;
+              }
               return i;
-            }
-          }),
-        });
-      } else if (!existedResult) {
-        await this.gamesRepository.update(gameStore.id, {
-          results: [...gameStore.results, currentResult],
-        });
-      }
-      if (isWinner) {
-        await this.gamesRepository.update(gameStore.id, {
-          top: currentResult,
-        });
-        setTimeout(async () => {
-          await config.onMessage(config.getWinText(currentResult.username));
-        }, 2500);
+            }),
+          });
+        } else if (!existedResult) {
+          await this.gamesRepository.update(game.id, {
+            results: [...game.results, currentResult],
+          });
+        }
+        if (isWinner) {
+          await this.gamesRepository.update(game.id, {
+            top: currentResult,
+          });
+          output = [...output, config.getWinText(currentResult.user)];
+        } else {
+          output = [...output, config.getLoseText(currentResult.user)];
+        }
       } else {
-        setTimeout(async () => {
-          await config.onMessage(config.getLoseText(currentResult.username));
-        }, 2500);
+        output = [
+          ...output,
+          config.getFailText(currentResult.place, currentResult.user),
+        ];
       }
+    } else {
+      output = [...output, config.cooldownText];
     }
+    return output;
   }
 
-  async getResult(config: IGetResult) {
+  async result(config: IGetResult): Promise<string> {
     const gameStore = await this.gamesRepository.findOne({
       where: {
         game: config.gameType,
         chatId: config.chatId,
       },
     });
-
-    if (!gameStore) {
-      await config.onMessage(config.notTopText);
-      return;
-    }
-
-    const currentUser = config.username;
-    const userResult = gameStore.results.find(
-      (i) => i.username === currentUser,
-    );
     if (gameStore && gameStore.top) {
-      await config.onMessage(config.resultTitle);
-      await config.onMessage(
-        config.getTopResultText(
-          gameStore.top.username as string,
-          gameStore.top.item,
-          gameStore.top.weight,
-        ),
+      const currentUser = config.user.id;
+      const userResult = gameStore.results.find(
+        (i) => i.user.id === currentUser,
       );
-    } else {
-      await config.onMessage(config.notTopText);
+
+      const userResultText = userResult
+        ? `\n${config.getUserResultText(userResult.item, userResult.weight)}`
+        : '';
+
+      return `${config.resultTitle}\n${config.getTopResultText(
+        gameStore.top.user,
+        gameStore.top.item,
+        gameStore.top.weight,
+      )}${userResultText}`;
     }
 
-    if (userResult) {
-      await config.onMessage(
-        config.getUserResultText(userResult.item, userResult.weight),
-      );
-    }
+    return config.notTopText;
   }
 }

@@ -1,11 +1,14 @@
 import { Inject, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import { IUser } from 'src/types/telegram.type';
 import { Context, Telegraf } from 'telegraf';
+import { noop } from 'lodash';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 import { removeMessageTimeout } from '../utils/message.util';
 import { getUserMention } from '../utils/user.util';
 import { GamesEngineService } from './engine/games-engine.service';
 import { Games } from './types/games.enums';
+import { delay, useAsyncForEach } from '../utils/helpers.util';
 
 const MAX_WEIGHT = 50000;
 
@@ -78,47 +81,68 @@ export class ArcheologyService implements OnModuleInit {
   }
 
   async play(ctx: Context) {
-    this.gamesEngineService.play({
-      chatId: ctx.chat?.id as number,
-      cooldownText: 'Полируем лопаты...',
-      getFirstMessage: (place: string) =>
-        `Вы начали раскопки ${place} и усиленно роете лопатами, экскаватором... Вам кажется что ваш совочек ударился обо что-то твердое. Может это клад?!`,
-      getSecondMessage: (item: string, username: string, weight: number) =>
-        `Поздравляю, ${username}! Вы только что выкопали ${item}, возраст - ${weight} лет!`,
-      getFailText: (place: string, username: string) =>
-        `По уши закопавшись ${place}, ${username}, нифига вы не выкопали! Может повезет в другом месте?`,
-      getLoseText: (username: string) =>
-        `Извини, ${username}, но это не самая тяжелая находка!`,
-      getWinText: (username: string) =>
-        `Поздравляю, ${username}, ты побил предыдущий рекорд!`,
-      gameType: Games.Archeology,
-      items: ITEMS,
-      places: PLACES,
-      maxWeight: MAX_WEIGHT,
-      onMessage: (message: string) =>
-        ctx
-          .reply(message, { parse_mode: 'Markdown' })
-          .then((msg) => removeMessageTimeout(ctx, msg)),
-      username: getUserMention(ctx.from),
-    });
+    const user = ctx.from;
+    const chatId = ctx.chat?.id;
+    if (user && chatId) {
+      useAsyncForEach<string>(
+        async (message) => {
+          ctx
+            .reply(message, { parse_mode: 'Markdown' })
+            .then((msg) => removeMessageTimeout(ctx, msg));
+          await delay(1000);
+        },
+        await this.gamesEngineService.play({
+          user,
+          chatId,
+          cooldownText: 'Полируем лопаты...',
+          getFirstMessage: (place: string) =>
+            `Вы начали раскопки ${place} и усиленно роете лопатами, экскаватором... Вам кажется что ваш совочек ударился обо что-то твердое. Может это клад?!`,
+          getSecondMessage: (item: string, usr: IUser, weight: number) =>
+            `Поздравляю, ${getUserMention(
+              usr,
+            )}! Вы только что выкопали ${item}, возраст - ${weight} лет!`,
+          getFailText: (place: string, usr: IUser) =>
+            `По уши закопавшись ${place}, ${getUserMention(
+              usr,
+            )}, нифига вы не выкопали! Может повезет в другом месте?`,
+          getLoseText: (usr: IUser) =>
+            `Извини, ${getUserMention(usr)}, но это не самая тяжелая находка!`,
+          getWinText: (usr: IUser) =>
+            `Поздравляю, ${getUserMention(usr)}, ты побил предыдущий рекорд!`,
+          gameType: Games.Archeology,
+          items: ITEMS,
+          places: PLACES,
+          maxWeight: MAX_WEIGHT,
+        }),
+      ).then(noop);
+    }
   }
 
   async scores(ctx: Context) {
-    this.gamesEngineService.getResult({
-      chatId: ctx.chat?.id as number,
-      gameType: Games.Archeology,
-      getTopResultText: (username: string, item: string, weight: number) =>
-        `Игрок ${username} вырыл ${item}. Возраст артефакта ${weight} лет`,
-      notTopText: 'Еще никто ничего не выкопал!',
-      resultTitle: 'Самая лучшая раскопка:',
-      getUserResultText: (item: string, weight: number) =>
-        `Твоя лучшая находка: ${item}, возраст которой ${weight} лет`,
-      username: getUserMention(ctx.from),
-      onMessage: (message: string) =>
-        ctx
-          .reply(message, { parse_mode: 'Markdown' })
-          .then((msg) => removeMessageTimeout(ctx, msg)),
-    });
+    const user = ctx.from;
+    const chatId = ctx.chat?.id;
+    if (user && chatId) {
+      ctx
+        .reply(
+          await this.gamesEngineService.result({
+            user,
+            chatId,
+            gameType: Games.Archeology,
+            getTopResultText: (usr: IUser, item: string, weight: number) =>
+              `Игрок ${getUserMention(
+                usr,
+              )} вырыл ${item}. Возраст артефакта ${weight} лет`,
+            notTopText: 'Еще никто ничего не выкопал!',
+            resultTitle: 'Самая лучшая раскопка:',
+            getUserResultText: (item: string, weight: number) =>
+              `Твоя лучшая находка: ${item}, возраст которой ${weight} лет`,
+          }),
+          { parse_mode: 'Markdown' },
+        )
+        .then((msg) => {
+          removeMessageTimeout(ctx, msg).then(noop);
+        });
+    }
   }
 
   listenEvents() {

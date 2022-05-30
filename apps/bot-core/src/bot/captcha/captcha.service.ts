@@ -1,11 +1,11 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { Client, ClientGrpc } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import moment from 'moment';
 import { Context, Markup, Telegraf } from 'telegraf';
-import { Logger } from '@nestjs/common';
 import { CaptchaServiceClient } from '@app/protobufs';
+import { noop } from 'lodash';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 import { captchaServiceOptions } from '../options/grpc.options';
 import { getUserMention } from '../utils/user.util';
@@ -23,13 +23,16 @@ import { ICallbackData, ICaptchaPayload } from './captcha.types';
 @Injectable()
 export class EventsService implements OnModuleInit {
   private bot!: Telegraf;
+
   @Client(captchaServiceOptions)
   private client!: ClientGrpc;
 
   private readonly logger = new Logger(EventsService.name);
 
   private captchaService!: CaptchaServiceClient;
+
   private waitCaptcha: Map<number, ICaptchaPayload[]> = new Map();
+
   private actionsStore: ActionStore;
 
   constructor(
@@ -45,7 +48,7 @@ export class EventsService implements OnModuleInit {
 
   listenEvents() {
     // this.bot.command('captcha', this.enterMessage);
-    this.bot.hears(/^(\-{0,1})[0-9]+$/, this.validateCaptcha);
+    this.bot.hears(/^(-?)\d+$/, this.validateCaptcha);
     this.bot.on('new_chat_members', this.enterMessage);
     this.bot.action(
       this.actionsStore.getActionPrefixRegExp(),
@@ -68,7 +71,7 @@ export class EventsService implements OnModuleInit {
       const userCaptcha = channelWaitCaptcha?.find(
         (captcha) => captcha.userId === userId,
       );
-      let isTriggeredAdmin = false;
+      let isTriggeredAdmin: boolean;
       try {
         isTriggeredAdmin = Boolean(
           (await this.bot.telegram.getChatAdministrators(chatId)).find(
@@ -80,9 +83,11 @@ export class EventsService implements OnModuleInit {
       }
 
       if ((userId !== triggerUserId && !isTriggeredAdmin) || !userChoice) {
-        ctx.answerCbQuery('Капча предоставлена для другого пользователя', {
-          show_alert: true,
-        });
+        ctx
+          .answerCbQuery('Капча предоставлена для другого пользователя', {
+            show_alert: true,
+          })
+          .then(noop);
         return;
       }
 
@@ -101,47 +106,49 @@ export class EventsService implements OnModuleInit {
             channelWaitCaptcha.filter((i) => i.chatId !== chatId),
           );
           clearTimeout(userCaptcha.banTimer);
-          this.bot.telegram.restrictChatMember(chatId, userId, {
-            permissions: {
-              can_send_messages: true,
-            },
-          });
-          ctx.answerCbQuery('Добро пожаловать', {
-            show_alert: true,
-          });
+          this.bot.telegram
+            .restrictChatMember(chatId, userId, {
+              permissions: {
+                can_send_messages: true,
+              },
+            })
+            .then(noop);
+          ctx
+            .answerCbQuery('Добро пожаловать', {
+              show_alert: true,
+            })
+            .then(noop);
           return;
-        } else {
-          if (userCaptcha) {
-            const triesLeft = userCaptcha.triesLeft - 1;
-            if (triesLeft === 0) {
-              this.waitCaptcha.set(
-                chatId,
-                channelWaitCaptcha.filter((i) => i.userId !== userId),
+        }
+        if (userCaptcha) {
+          const triesLeft = userCaptcha.triesLeft - 1;
+          if (triesLeft === 0) {
+            this.waitCaptcha.set(
+              chatId,
+              channelWaitCaptcha.filter((i) => i.userId !== userId),
+            );
+            try {
+              userCaptcha.enterMessageIds.forEach((msg) => {
+                ctx.deleteMessage(msg);
+              });
+              clearTimeout(userCaptcha.banTimer);
+              await ctx.answerCbQuery(
+                `Ты не прошел капчу, время бана: ${BAN_MINUTES} минут`,
+                {
+                  show_alert: true,
+                },
               );
-              try {
-                userCaptcha.enterMessageIds.forEach((msg) => {
-                  ctx.deleteMessage(msg);
-                });
-                clearTimeout(userCaptcha.banTimer);
-                await ctx.answerCbQuery(
-                  `Ты не прошел капчу, время бана: ${BAN_MINUTES} минут`,
-                  {
-                    show_alert: true,
-                  },
-                );
-                await this.banUser(userId, userCaptcha.chatId);
-              } catch (error: unknown) {
-                Logger.error((error as Error).message);
-                ctx.answerCbQuery();
-              }
-              return;
-            } else {
-              const errorText = `${
-                ERROR_MESSAGES[getRandomInt(0, ERROR_MESSAGES.length - 1)]
-              } Осталось попыток: ${triesLeft}`;
-              this.sendCaptcha(ctx, triesLeft, userId, errorText);
+              await this.banUser(userId, userCaptcha.chatId);
+            } catch (error: unknown) {
+              Logger.error((error as Error).message);
+              ctx.answerCbQuery().then(noop);
             }
+            return;
           }
+          const errorText = `${
+            ERROR_MESSAGES[getRandomInt(0, ERROR_MESSAGES.length - 1)]
+          } Осталось попыток: ${triesLeft}`;
+          this.sendCaptcha(ctx, triesLeft, userId, errorText).then(noop);
         }
       } catch (e) {
         Logger.error(e, 'validate error');
@@ -151,7 +158,7 @@ export class EventsService implements OnModuleInit {
 
   private async banUser(userId: number, chatId: number) {
     try {
-      return this.bot.telegram.banChatMember(
+      return await this.bot.telegram.banChatMember(
         chatId,
         userId,
         moment().add(BAN_MINUTES, 'minutes').unix(),
@@ -239,11 +246,11 @@ export class EventsService implements OnModuleInit {
           const banTimer = setTimeout(() => {
             this.banUser(userId, chatId);
             const channelWaitCaptcha = this.waitCaptcha.get(chatId) || [];
-            const userCaptcha = channelWaitCaptcha?.find(
-              (captcha) => captcha.userId === userId,
+            const existChannelCaptcha = channelWaitCaptcha?.find(
+              (existedUserCaptcha) => existedUserCaptcha.userId === userId,
             );
-            userCaptcha?.enterMessageIds.forEach((msg) => {
-              ctx.deleteMessage(msg);
+            existChannelCaptcha?.enterMessageIds.forEach((_msg) => {
+              ctx.deleteMessage(_msg);
             });
             this.waitCaptcha.set(
               chatId,

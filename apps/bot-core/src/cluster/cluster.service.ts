@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import cluster from 'cluster';
 import os from 'os';
+import { noop } from 'lodash';
 
 const getWorkers = () => {
   return os.cpus().length - 1;
@@ -23,7 +24,7 @@ export class ClusterService {
   ) {
     ClusterService.processCount = processCount;
     if (!ClusterService.getIsMaster()) {
-      workerEntry();
+      workerEntry().then(noop);
       return;
     }
 

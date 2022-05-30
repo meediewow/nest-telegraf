@@ -9,7 +9,9 @@ interface IKarma {
 @Entity('chats')
 export class Chat {
   @ObjectIdColumn() id!: ObjectID;
+
   @Column() chatId!: number;
+
   @Column() karma!: IKarma;
 
   constructor(chat?: Partial<Chat>) {
