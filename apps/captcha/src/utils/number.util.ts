@@ -1,7 +1,7 @@
 export const getRandomInt = (min, max): number => {
-  min = Math.ceil(min);
-  max = Math.floor(max);
-  return Math.round(Math.random() * (max - min) + min);
+  const minCeil = Math.ceil(min);
+  const maxFloor = Math.floor(max);
+  return Math.round(Math.random() * (maxFloor - minCeil) + minCeil);
 };
 
 export const parseExpression = (
@@ -9,6 +9,7 @@ export const parseExpression = (
   second: number | string,
   operator: '+' | '-',
 ) => {
+  // eslint-disable-next-line default-case
   switch (operator) {
     case '+': {
       return {

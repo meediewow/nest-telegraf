@@ -1,7 +1,8 @@
 import { generateId } from './number.util';
 
 export class ActionStore {
-  private prefix: string;
+  private readonly prefix: string;
+
   private store: Map<string, unknown>;
 
   constructor(prefix: string) {

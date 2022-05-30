@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SentryModule } from '@ntegral/nestjs-sentry';
 import { BotModule } from './bot/bot.module';
 import { MongoDBModule } from './mongodb/mongodb.module';
-import { SentryModule } from '@ntegral/nestjs-sentry';
 
 const envModule = ConfigModule.forRoot({
   isGlobal: true,

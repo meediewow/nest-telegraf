@@ -9,8 +9,6 @@ import {
 } from '@nestjs/common';
 import { DiscoveryModule, ModuleRef } from '@nestjs/core';
 import { Telegraf } from 'telegraf';
-// import { CommandsModule } from './commands/commands.module';
-// import { TextModule } from './text/text.module';
 import {
   TelegrafModuleAsyncOptions,
   TelegrafModuleOptions,
@@ -46,7 +44,7 @@ export class TelegrafCoreModule implements OnApplicationShutdown {
 
     const telegrafBotProvider: Provider = {
       provide: telegrafBotName,
-      useFactory: async () => await createBotFactory(options),
+      useFactory: async () => createBotFactory(options),
     };
 
     return {
@@ -80,8 +78,8 @@ export class TelegrafCoreModule implements OnApplicationShutdown {
 
     const telegrafBotProvider: Provider = {
       provide: telegrafBotName,
-      useFactory: async (options: TelegrafModuleOptions) =>
-        await createBotFactory(options),
+      useFactory: async (factoryOptions: TelegrafModuleOptions) =>
+        createBotFactory(factoryOptions),
       inject: [TELEGRAF_MODULE_OPTIONS],
     };
 
@@ -105,7 +103,9 @@ export class TelegrafCoreModule implements OnApplicationShutdown {
 
   async onApplicationShutdown(): Promise<void> {
     const bot = this.moduleRef.get<Telegraf>(this.botName);
-    bot && (await bot.stop());
+    if (bot) {
+      await bot.stop();
+    }
   }
 
   private static createAsyncProviders(
@@ -140,7 +140,7 @@ export class TelegrafCoreModule implements OnApplicationShutdown {
     return {
       provide: TELEGRAF_MODULE_OPTIONS,
       useFactory: async (optionsFactory: TelegrafOptionsFactory) =>
-        await optionsFactory.createTelegrafOptions(),
+        optionsFactory.createTelegrafOptions(),
       inject,
     };
   }

@@ -1,11 +1,14 @@
 import { Inject, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import { IUser } from 'src/types/telegram.type';
 import { Context, Telegraf } from 'telegraf';
+import { noop } from 'lodash';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 import { removeMessageTimeout } from '../utils/message.util';
 import { getUserMention } from '../utils/user.util';
 import { GamesEngineService } from './engine/games-engine.service';
 import { Games } from './types/games.enums';
+import { delay, useAsyncForEach } from '../utils/helpers.util';
 
 const MAX_WEIGHT = 600;
 
@@ -86,47 +89,70 @@ export class FishService implements OnModuleInit {
   }
 
   async play(ctx: Context) {
-    this.gamesEngineService.play({
-      chatId: ctx.chat?.id as number,
-      cooldownText: 'Натягиваем леску...',
-      getFirstMessage: (place: string) =>
-        `Вы забрасываете бамбуковую удочку в ${place}. Вы чувствуете поклевку и начинаете быстро тащить что-то из воды`,
-      getSecondMessage: (item: string, username: string, weight: number) =>
-        `Поздравляю, ${username}! Вы только что выловили ${item} весом ${weight} кило!`,
-      getFailText: (place: string, username: string) =>
-        `Черт, твоя рыбка сорвалась, ${username}. Не беда, может потом повезет?`,
-      getLoseText: (username: string) =>
-        `Извини, ${username}, но это не самая тяжелая находка!`,
-      getWinText: (username: string) =>
-        `Поздравляю, ${username}, ты побил предыдущий рекорд!`,
-      gameType: Games.Fish,
-      items: ITEMS,
-      places: PLACES,
-      maxWeight: MAX_WEIGHT,
-      onMessage: (message: string) =>
-        ctx
-          .reply(message, { parse_mode: 'Markdown' })
-          .then((msg) => removeMessageTimeout(ctx, msg)),
-      username: getUserMention(ctx.from),
-    });
+    const user = ctx.from;
+    const chatId = ctx.chat?.id;
+    if (user && chatId) {
+      useAsyncForEach<string>(
+        async (message) => {
+          ctx
+            .reply(message, {
+              parse_mode: 'Markdown',
+            })
+            .then((msg) => {
+              removeMessageTimeout(ctx, msg).then(noop);
+            });
+          await delay(1000);
+        },
+        await this.gamesEngineService.play({
+          user,
+          chatId,
+          cooldownText: 'Натягиваем леску...',
+          getFirstMessage: (place: string) =>
+            `Вы забрасываете бамбуковую удочку в ${place}. Вы чувствуете поклевку и начинаете быстро тащить что-то из воды`,
+          getSecondMessage: (item: string, usr: IUser, weight: number) =>
+            `Поздравляю, ${getUserMention(
+              usr,
+            )}! Вы только что выловили ${item} весом ${weight} кило!`,
+          getFailText: (place: string, usr: IUser) =>
+            `Черт, твоя рыбка сорвалась, ${getUserMention(
+              usr,
+            )}. Не беда, может потом повезет?`,
+          getLoseText: (usr: IUser) =>
+            `Извини, ${getUserMention(usr)}, но это не самая тяжелая находка!`,
+          getWinText: (usr: IUser) =>
+            `Поздравляю, ${getUserMention(usr)}, ты побил предыдущий рекорд!`,
+          gameType: Games.Fish,
+          items: ITEMS,
+          places: PLACES,
+          maxWeight: MAX_WEIGHT,
+        }),
+      ).then(noop);
+    }
   }
 
   async scores(ctx: Context) {
-    this.gamesEngineService.getResult({
-      chatId: ctx.chat?.id as number,
-      gameType: Games.Fish,
-      getTopResultText: (username: string, item: string, weight: number) =>
-        `Игрок ${username} выловил ${item}. Вес: ${weight} кг`,
-      notTopText: 'Еще никто ничего не споймал!',
-      resultTitle: 'Самый лучший улов:',
-      getUserResultText: (item: string, weight: number) =>
-        `Твой лучший улов: ${item}, весом ${weight} кило!`,
-      username: getUserMention(ctx.from),
-      onMessage: (message: string) =>
-        ctx
-          .reply(message, { parse_mode: 'Markdown' })
-          .then((msg) => removeMessageTimeout(ctx, msg)),
-    });
+    const user = ctx.from;
+    const chatId = ctx.chat?.id;
+    if (user && chatId) {
+      ctx
+        .reply(
+          await this.gamesEngineService.result({
+            user,
+            chatId,
+            gameType: Games.Fish,
+            getTopResultText: (usr: IUser, item: string, weight: number) =>
+              `Игрок ${getUserMention(usr)} выловил ${item}. Вес: ${weight} кг`,
+            notTopText: 'Еще никто ничего не споймал!',
+            resultTitle: 'Самый лучший улов:',
+            getUserResultText: (item: string, weight: number) =>
+              `Твой лучший улов: ${item}, весом ${weight} кило!`,
+          }),
+          { parse_mode: 'Markdown' },
+        )
+        .then((msg) => {
+          removeMessageTimeout(ctx, msg).then(noop);
+        });
+    }
   }
 
   listenEvents() {

@@ -1,6 +1,7 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { Context, Markup, Telegraf } from 'telegraf';
+import { noop } from 'lodash';
 import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
 
 @Injectable()
@@ -17,19 +18,36 @@ export class MenuService implements OnModuleInit {
 
   listenCommands() {
     this.bot.command('menu', this.sendMenu);
+    this.bot.command('casino', this.sendCasino);
+  }
+
+  sendCasino(ctx: Context): void {
+    ctx
+      .reply(
+        'Casino ',
+        Markup.inlineKeyboard([
+          [
+            Markup.button.webApp('BetGames', 'https://demo.betgames.tv'),
+            // Markup.button.webApp('TVBet', 'https://tvbet.tv/en/demo-en/'),
+          ],
+        ]),
+      )
+      .then(noop);
   }
 
   sendMenu(ctx: Context): void {
-    ctx.reply(
-      'Доступные функции: ',
-      Markup.keyboard([
-        [Markup.button.text('/karma')],
-        [Markup.button.text('/hunt'), Markup.button.text('/hunt_scores')],
-        [Markup.button.text('/fish'), Markup.button.text('/fish_scores')],
-        [Markup.button.text('/dig'), Markup.button.text('/dig_scores')],
-        [Markup.button.text('/total_scores')],
-      ]).resize(),
-    );
+    ctx
+      .reply(
+        'Доступные функции: ',
+        Markup.keyboard([
+          [Markup.button.text('/karma')],
+          [Markup.button.text('/hunt'), Markup.button.text('/hunt_scores')],
+          [Markup.button.text('/fish'), Markup.button.text('/fish_scores')],
+          [Markup.button.text('/dig'), Markup.button.text('/dig_scores')],
+          [Markup.button.text('/total_scores')],
+        ]).resize(),
+      )
+      .then(noop);
   }
 
   onModuleInit(): void {

@@ -1,18 +1,18 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { Client } from '@nestjs/microservices';
 import { Context, Markup, Telegraf } from 'telegraf';
-import { Logger } from '@nestjs/common';
-import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
-import { captchaServiceOptions } from '../options/grpc.options';
-import { IDelayBuffer, KarmaActionsEnum } from './karma.types';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Karma } from 'src/mongodb/entity/karma.entity';
 import { MongoRepository } from 'typeorm';
 import { Chat } from 'src/mongodb/entity/chat.entity';
 import { User, Message } from 'telegraf/typings/core/types/typegram';
-import { getUserMention } from '../utils/user.util';
 import moment from 'moment';
+import { noop } from 'lodash';
+import { getUserMention } from '../utils/user.util';
+import { IDelayBuffer, KarmaActionsEnum } from './karma.types';
+import { TELEGRAF_BOT_NAME } from '../core/telegraf.constants';
+import { captchaServiceOptions } from '../options/grpc.options';
 import { generateId } from '../utils/number.util';
 import {
   DELAY,
@@ -29,8 +29,10 @@ import { removeMessageTimeout } from '../utils/message.util';
 @Injectable()
 export class KarmaService implements OnModuleInit {
   private bot!: Telegraf;
+
   @Client(captchaServiceOptions)
   private readonly logger = new Logger(KarmaService.name);
+
   private delayBuffer: Map<number, IDelayBuffer[]> = new Map<
     number,
     IDelayBuffer[]
@@ -187,11 +189,15 @@ export class KarmaService implements OnModuleInit {
           },
         );
       } else {
-        ctx.answerCbQuery('Уже активировано!', { show_alert: true });
+        ctx.answerCbQuery('Уже активировано!', { show_alert: true }).then(noop);
       }
-      ctx.answerCbQuery('Успешно активировано!', { show_alert: true });
+      ctx
+        .answerCbQuery('Успешно активировано!', { show_alert: true })
+        .then(noop);
     } else {
-      ctx.answerCbQuery('Нужно обладать правами админа', { show_alert: true });
+      ctx
+        .answerCbQuery('Нужно обладать правами админа', { show_alert: true })
+        .then(noop);
     }
   }
 
@@ -206,20 +212,26 @@ export class KarmaService implements OnModuleInit {
         where: { chatId },
       });
       if (chat?.karma?.isEnabled) {
-        this.chatRepository.updateOne(
-          {
-            _id: chat.id,
-          },
-          {
-            $set: {
-              'karma.isEnabled': false,
+        this.chatRepository
+          .updateOne(
+            {
+              _id: chat.id,
             },
-          },
-        );
-        ctx.answerCbQuery('Успешно деактивировано!', { show_alert: true });
+            {
+              $set: {
+                'karma.isEnabled': false,
+              },
+            },
+          )
+          .then(noop);
+        ctx
+          .answerCbQuery('Успешно деактивировано!', { show_alert: true })
+          .then(noop);
       }
     } else {
-      ctx.answerCbQuery('Нужно обладать правами админа', { show_alert: true });
+      ctx
+        .answerCbQuery('Нужно обладать правами админа', { show_alert: true })
+        .then(noop);
     }
   }
 
@@ -230,9 +242,11 @@ export class KarmaService implements OnModuleInit {
     }
     const isEnabled = await this.isEnabled(chatId);
     if (!isEnabled) {
-      ctx.answerCbQuery('Карма не активирована на канале', {
-        show_alert: true,
-      });
+      ctx
+        .answerCbQuery('Карма не активирована на канале', {
+          show_alert: true,
+        })
+        .then(noop);
       return;
     }
 
@@ -248,8 +262,8 @@ export class KarmaService implements OnModuleInit {
       } \n`;
     }, '');
 
-    ctx.reply(resultText, { parse_mode: 'Markdown' });
-    ctx.answerCbQuery();
+    ctx.reply(resultText, { parse_mode: 'Markdown' }).then(noop);
+    ctx.answerCbQuery().then(noop);
   }
 
   async menu(ctx: Context) {
@@ -268,10 +282,12 @@ export class KarmaService implements OnModuleInit {
         ? Markup.button.callback('Деактивировать', KarmaActionsEnum.OFF)
         : Markup.button.callback('Активировать', KarmaActionsEnum.ON),
     ];
-    ctx.reply(
-      'Карма',
-      Markup.inlineKeyboard(isAdmin ? [...admin, ...common] : common),
-    );
+    ctx
+      .reply(
+        'Карма',
+        Markup.inlineKeyboard(isAdmin ? [...admin, ...common] : common),
+      )
+      .then(noop);
   }
 
   async change(ctx: Context) {
@@ -314,6 +330,7 @@ export class KarmaService implements OnModuleInit {
       const triggerUserKarma = await this.getUserKarma(message.from, chatId);
       const targetUserKarma = await this.getUserKarma(targetUser, chatId);
 
+      // eslint-disable-next-line default-case
       switch (message.text.trim()[0]) {
         case '+': {
           const updatedKarma = Number(
@@ -323,7 +340,7 @@ export class KarmaService implements OnModuleInit {
             chatId,
             targetUser,
             Number((targetUserKarma + Math.sqrt(triggerUserKarma)).toFixed(2)),
-          );
+          ).then(noop);
           ctx
             .reply(
               `Вы увеличили карму ${getUserMention(
@@ -365,54 +382,61 @@ export class KarmaService implements OnModuleInit {
                 )
                 .then((msg) => removeMessageTimeout(ctx, msg));
               const untilData = moment().add(restrictionDays, 'days').unix();
-              this.bot.telegram.restrictChatMember(chatId, targetUser?.id, {
-                permissions: {
-                  can_send_messages: false,
-                },
-                until_date: untilData,
-              });
-              this.karmaRepository.findOneAndUpdate(
-                {
-                  userId: targetUser.id,
-                  chatId,
-                },
-                {
-                  $set: {
-                    lastRestrictionUntil: untilData,
+              this.bot.telegram
+                .restrictChatMember(chatId, targetUser?.id, {
+                  permissions: {
+                    can_send_messages: false,
                   },
-                  $push: {
-                    restrictions: {
-                      createdAt: moment().unix(),
-                      periodDays: restrictionDays,
+                  until_date: untilData,
+                })
+                .then(noop);
+              this.karmaRepository
+                .findOneAndUpdate(
+                  {
+                    userId: targetUser.id,
+                    chatId,
+                  },
+                  {
+                    $set: {
+                      lastRestrictionUntil: untilData,
+                    },
+                    $push: {
+                      restrictions: {
+                        createdAt: moment().unix(),
+                        periodDays: restrictionDays,
+                      },
                     },
                   },
-                },
-              );
+                )
+                .then(noop);
             } else {
-              ctx.reply(
-                `${getUserMention(
-                  targetUser,
-                )}, Ваша карма упала ниже ${LOWER_LEVEL}.`,
-                {
-                  parse_mode: 'Markdown',
-                },
-              );
+              ctx
+                .reply(
+                  `${getUserMention(
+                    targetUser,
+                  )}, Ваша карма упала ниже ${LOWER_LEVEL}.`,
+                  {
+                    parse_mode: 'Markdown',
+                  },
+                )
+                .then(noop);
             }
-            this.changeKarma(chatId, targetUser, 20);
+            this.changeKarma(chatId, targetUser, 20).then(noop);
             break;
           }
-          this.changeKarma(chatId, targetUser, updatedKarma);
+          this.changeKarma(chatId, targetUser, updatedKarma).then(noop);
           break;
         }
       }
       const timerId = generateId();
-      const userDelays = this.delayBuffer.get(triggerUser.id) || [];
+      const existedUserDelays = this.delayBuffer.get(triggerUser.id) || [];
       this.delayBuffer.set(triggerUser.id, [
-        ...userDelays,
+        ...existedUserDelays,
         {
           id: timerId,
           targetId: targetUser.id,
           timer: setTimeout(() => {
+            // eslint-disable-next-line @typescript-eslint/no-shadow
             const userDelays = this.delayBuffer.get(triggerUser.id) || [];
             this.delayBuffer.set(
               triggerUser.id,
@@ -431,15 +455,19 @@ export class KarmaService implements OnModuleInit {
     }
     const isEnabled = await this.isEnabled(chatId);
     if (!isEnabled) {
-      ctx.answerCbQuery('Карма не активирована на канале', {
-        show_alert: true,
-      });
+      ctx
+        .answerCbQuery('Карма не активирована на канале', {
+          show_alert: true,
+        })
+        .then(noop);
       return;
     }
     const userKarma = await this.getUserKarma(ctx.callbackQuery?.from, chatId);
-    ctx.answerCbQuery(`Твоя карма составляет: ${userKarma}`, {
-      show_alert: true,
-    });
+    ctx
+      .answerCbQuery(`Твоя карма составляет: ${userKarma}`, {
+        show_alert: true,
+      })
+      .then(noop);
   }
 
   listenEvents() {

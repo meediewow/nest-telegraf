@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { CaptchaService } from './captcha.service';
 import { CaptchaServiceController, CAPTCHA_SERVICE_NAME } from '@app/protobufs';
+import { CaptchaService } from './captcha.service';
 
 @Controller()
 export class CaptchaController implements CaptchaServiceController {
