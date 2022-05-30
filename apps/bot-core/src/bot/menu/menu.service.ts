@@ -18,21 +18,6 @@ export class MenuService implements OnModuleInit {
 
   listenCommands() {
     this.bot.command('menu', this.sendMenu);
-    this.bot.command('casino', this.sendCasino);
-  }
-
-  sendCasino(ctx: Context): void {
-    ctx
-      .reply(
-        'Casino ',
-        Markup.inlineKeyboard([
-          [
-            Markup.button.webApp('BetGames', 'https://demo.betgames.tv'),
-            // Markup.button.webApp('TVBet', 'https://tvbet.tv/en/demo-en/'),
-          ],
-        ]),
-      )
-      .then(noop);
   }
 
   sendMenu(ctx: Context): void {
